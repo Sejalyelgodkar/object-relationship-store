@@ -87,3 +87,40 @@ test("Memory should not increase when the same object is passed twice", () => {
 
   expect(memoryBefore).toBe(memoryAfter)
 })
+
+test("Memory should not increase when we add more relationships", () => {
+
+  const store1 = createStore({
+    relationalCreators: [user, post, image, thumbnail],
+    identifier: {
+      'user': o => !!o.username,
+      'image': o => !!o.baseScale,
+      'thumbnail': o => !!o.uri,
+      'post': o => !!o.caption,
+    }
+  });
+  
+  store1.upsert(posts)
+  
+  const memoryStore1 = getObjectMemoryUsageInMB(store1.state);
+
+  user.hasMany(post, "posts")
+  image.hasOne(user,"user")
+
+  const store2 = createStore({
+    relationalCreators: [user, post, image, thumbnail],
+    identifier: {
+      'user': o => !!o.username,
+      'image': o => !!o.baseScale,
+      'thumbnail': o => !!o.uri,
+      'post': o => !!o.caption,
+    }
+  });
+
+  store2.upsert(posts)
+
+  const memoryStore2 = getObjectMemoryUsageInMB(store2.state);
+
+  // Increased very slightly because of an additional field and a few extra references
+  expect(memoryStore2).toBe(memoryStore1 + 0.0000476837158203125)
+})

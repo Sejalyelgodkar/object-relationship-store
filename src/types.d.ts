@@ -7,9 +7,7 @@ export interface RelationalObject<N extends string = string> {
   [field: symbol]: Primitive | "hasOne" | "hasMany";
   __name: N;
   __primaryKey: string;
-  __relationship: {
-    __alias: Record<string, string>
-  } & Record<string, Has<N>>;
+  __relationship: Record<string, Has<N>>;
 }
 
 export interface RelationalCreator<N extends string = string> extends RelationalObject<N> {
@@ -24,6 +22,8 @@ export type Schema = Record<string, Primitive>
 export interface Has<N extends string> {
   __name: N;
   __primaryKey: string;
+  __has: "hasOne" | "hasMany";
+  __alias: string;
 }
 
 type IdentifierFunction<T> = (object: T) => boolean;

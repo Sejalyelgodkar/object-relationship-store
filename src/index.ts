@@ -10,6 +10,9 @@ image.hasMany(thumbnail, "thumbnails")
 user.hasOne(image, "profileImage")
 post.hasMany(image, "images")
 post.hasOne(user)
+user.hasMany(post, "posts")
+image.hasOne(user,"user")
+image.hasOne(post,"post")
 
 const store = createStore({
   relationalCreators: [user, post, image, thumbnail],
@@ -21,6 +24,9 @@ const store = createStore({
   }
 });
 
-
+//@ts-ignore
+// console.log(store.model.user.__relationship)
 // store.upsert([...posts, ...posts, ...posts, ...posts, ...posts, ...posts])
 store.upsert(posts)
+
+console.log(store.state.post[10].images[0].post)

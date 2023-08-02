@@ -18,7 +18,7 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
   const model = relationalCreators
     .reduce((r, t) => {
       const { hasOne, hasMany, ...next } = t
-      const k = next.__relationship.__alias[next.__primaryKey] ?? next.__primaryKey;
+      const k = next.__relationship[next.__primaryKey]?.__name ?? next.__primaryKey;
       if (!(next as any)[k]) throw new Error(`The table "${next.__name}" does not have a primary key (pk) "${t.__primaryKey}", pk should be listed here ${JSON.stringify(t)}`);
       return { ...r, [next.__name]: next }
     }, {} as Model<N>)
@@ -41,6 +41,65 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
 
   function upsert(object: any) {
     const items = Array.isArray(object) ? object : [object];
+
+
+    /**
+     *  If this object is related with the parent, then set the relationship
+     *  E.g. the parent is a post, the current object is a user
+     *  A post contains a user, so here we are.
+     *  However, a user also contains posts.
+     *  Here we add this post to the user appropriately, according to the
+     *  relationship defined in user.
+     * @param params 
+     */
+    function handleChildRelationshipWithParent(params: {
+      name: string;
+      item: any,
+      parentName: string;
+      primaryKey: string;
+      parentPrimaryKey: string;
+      relationalObject: RelationalObject;
+    }) {
+
+      const {
+        name,
+        item,
+        parentName,
+        primaryKey,
+        parentPrimaryKey,
+        relationalObject
+      } = params;
+
+      // Check if I have a relationship with my parent
+      const relationWithParent = Object.values(relationalObject.__relationship).find(has => has.__name === parentName);
+
+      if (relationWithParent) {
+
+        if (relationWithParent.__has === "hasOne") {
+          state[name][item[primaryKey]][relationWithParent.__alias] = state[parentName][parentPrimaryKey];
+        }
+
+        if (relationWithParent.__has === "hasMany") {
+          const existingItems = state[name][item[primaryKey]][relationWithParent.__alias];
+          const currentItem = state[parentName][parentPrimaryKey];
+          const isAnArray = Array.isArray(existingItems);
+
+          // If the existing items is not an array, it's new, assign it to a
+          // new array containg the current item.
+          if (!isAnArray) {
+            state[name][item[primaryKey]][relationWithParent.__alias] = [currentItem];
+          }
+
+          // The existing items is an array
+          // Check if the current item exists. If it does not, add it.
+          if (isAnArray) {
+            const exists = !!existingItems.find((i: any) => i[primaryKey] === currentItem[primaryKey]);
+            if (!exists) existingItems.push(currentItem)
+          }
+        }
+      }
+
+    }
 
     function upsertOne(params: {
       item: any;
@@ -65,91 +124,105 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
 
       const primaryKey = relationalObject.__primaryKey;
 
-      const relatedFields = <string[]>[];
-
       // If this table does not exist, initialize it.
       if (!state[name]) state[name] = {};
 
       // If the record does not exist, create an empty obj
-      if(!state[name][item[primaryKey]]) state[name][item[primaryKey]] = {};
-
-      for (const [field, value] of Object.entries(item)) {
-
-        // If this field is a related field, add it to the relatedFields list.
-        if (!!relationalObject.__relationship[field]) {
-          relatedFields.push(field);
-          continue;
-        }
-        
-        state[name][item[primaryKey]][field] = value;
-      }
+      if (!state[name][item[primaryKey]]) state[name][item[primaryKey]] = {};
 
 
+      Object
+        .entries(item)
+        .forEach(([field, value]) => {
+
+          // If this field is a related field, traverse in recursively
+          if (!!relationalObject.__relationship[field]) {
+
+            // @ts-ignore
+            const hasMany = relationalObject[field] === "hasMany";
+
+            if (!hasMany) {
+              upsertOne({
+                item: item[field],
+                parentPrimaryKey: item[primaryKey],
+                parentField: field,
+                parentName: name,
+              })
+              return;
+            }
+
+            item[field].forEach((oneItem: any) => {
+              upsertOne({
+                item: oneItem,
+                parentPrimaryKey: item[primaryKey],
+                parentField: field,
+                parentName: name,
+                parentFieldHasMany: true,
+              })
+            })
+            return;
+          }
+
+          state[name][item[primaryKey]][field] = value;
+
+        })
+
+
+      // If this is a child of someone
       if (parentName && parentField && parentPrimaryKey) {
+
         if (parentFieldHasMany) {
           const existingItems = state[parentName][parentPrimaryKey][parentField];
           const currentItem = state[name][item[primaryKey]];
-          const isAnArray = Array.isArray(existingItems);
-          if (!isAnArray) state[parentName][parentPrimaryKey][parentField] = [currentItem]
-          if (isAnArray) {
-            const exists = !!existingItems.find((i: any) => i[primaryKey] === currentItem[primaryKey]);
-            if (!exists) existingItems.push(currentItem)
+
+          // If the existing items is not an array, it's new, assign it to a
+          // new array containg the current item.
+          if (!Array.isArray(existingItems)) {
+            state[parentName][parentPrimaryKey][parentField] = [currentItem];
+            handleChildRelationshipWithParent({
+              name,
+              item,
+              parentName,
+              parentPrimaryKey,
+              primaryKey,
+              relationalObject
+            })
+            return;
           }
-        }
-        if (!parentFieldHasMany) {
-          state[parentName][parentPrimaryKey][parentField] = state[name][item[primaryKey]]
-        }
-      }
 
-      for (let i = 0; i < relatedFields.length; i++) {
-        const field = relatedFields[i];
-        // @ts-ignore
-        const hasMany = relationalObject[field] === "hasMany";
-
-        if (!hasMany) {
-          upsertOne({
-            item: item[field],
-            parentPrimaryKey: item[primaryKey],
-            parentField: field,
-            parentName: name,
-          })
-          continue;
+          // The existing items is an array
+          // Check if the current item exists. If it does not, add it.
+          const exists = !!existingItems.find((i: any) => i[primaryKey] === currentItem[primaryKey]);
+          if (!exists) {
+            existingItems.push(currentItem)
+            handleChildRelationshipWithParent({
+              name,
+              item,
+              parentName,
+              parentPrimaryKey,
+              primaryKey,
+              relationalObject
+            })
+          }
+          return;
         }
 
-        item[field].forEach((oneItem: any) => {
-          upsertOne({
-            item: oneItem,
-            parentPrimaryKey: item[primaryKey],
-            parentField: field,
-            parentName: name,
-            parentFieldHasMany: true,
-          })
+        handleChildRelationshipWithParent({
+          name,
+          item,
+          parentName,
+          parentPrimaryKey,
+          primaryKey,
+          relationalObject
         })
+
+        // The child has been created
+        // set the parent field to the reference of this object
+        state[parentName][parentPrimaryKey][parentField] = state[name][item[primaryKey]];
       }
     }
 
     items.forEach(item => upsertOne({ item }))
-
-    // console.log("BEFORE")
-    // console.log(state.user[2].profileImage.thumbnails[0])
-    // console.log(state.thumbnail[186])
-
-    // state.user[2].profileImage.thumbnails[0].uri = "Hello"
-
-    // console.log("AFTER")
-    // console.log(state.user[2].profileImage.thumbnails[0])
-    // console.log(state.thumbnail[186])
-
-    // console.log("BEFORE")
-    // console.log(state.user[2].username)
-    // console.log(state.post[10].user)
-
-    // state.user[2].username = "--updated"
-    // // state.post[9].user.username  = "--updated"
-
-    // console.log("AFTER")
-    // console.log(state.user[2].username)
-    // console.log(state.post[10].user.username)
 
     listeners.forEach((listener) => listener());
   }
