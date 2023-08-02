@@ -24,6 +24,12 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
     }, {} as Model<N>)
 
 
+  function subscribe(listener: () => void) {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  }
+
+
   function identify(item: any): string {
     for (const key in identifier) {
       if (!Object.prototype.hasOwnProperty.call(identifier, key)) continue;
@@ -34,12 +40,8 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
   }
 
 
-  function select() {
-    return state
-  }
-
-
   function upsert(object: any) {
+    
     const items = Array.isArray(object) ? object : [object];
 
 
@@ -50,7 +52,6 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
      *  However, a user also contains posts.
      *  Here we add this post to the user appropriately, according to the
      *  relationship defined in user.
-     * @param params 
      */
     function handleChildRelationshipWithParent(params: {
       name: string;
@@ -101,6 +102,10 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
 
     }
 
+
+    /**
+     * Upserts a single item. Calls itself recursively based on object relationship.
+     */
     function upsertOne(params: {
       item: any;
       parentName?: string;
@@ -222,18 +227,18 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
       }
     }
 
+
     items.forEach(item => upsertOne({ item }))
 
-    listeners.forEach((listener) => listener());
+
+    listeners.forEach(listener => listener());
   }
 
 
-  function subscribe(listener: () => void) {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
+  function select() {
+    return state
   }
 
-
-  return { model, state, upsert, subscribe }
+  return { state, upsert, subscribe }
 }
 
