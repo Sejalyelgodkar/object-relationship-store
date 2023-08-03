@@ -1,4 +1,5 @@
-import { CreateStoreConfig, Model, RelationalObject, SelectorFunction, State } from "../types";
+import { CreateStoreConfig, Model, RelationalObject, SelectOptions, SelectorFunction, State } from "../types";
+import querySelect from "./query/select";
 
 export function createStore<N extends string>(config: CreateStoreConfig<N>) {
 
@@ -234,10 +235,10 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
   }
 
 
-  function query<O extends Record<string, any>>(selector: SelectorFunction<N, O>) {
-    return selector(model, state);
+  function select<N extends string, O extends Record<string, any>>(options: SelectOptions<N, O>) {
+    return querySelect<N, O>(model, state, options);
   }
 
-  return { state, query, upsert, subscribe }
+  return { state, select, upsert, subscribe }
 }
 

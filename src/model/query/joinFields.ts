@@ -9,11 +9,12 @@ import select from "./select";
  * @param options 
  */
 export default function joinFields<
-  N extends string
+  N extends string,
+  O extends Record<string, any>
 >(
   result: Record<string, any>,
   options: {
-    join: JoinOptions<any>[];
+    join: JoinOptions<O>[];
     from: string;
     model: Model<N>;
     state: State
@@ -40,13 +41,11 @@ export default function joinFields<
       if (schema.__relationship[on].__has === "hasOne") {
 
         // Create the selector from the join statement.
-        const joinSelector = select({
-          fields: fields as any,
+        result[on] = select(model, state, {
+          fields,
           from: schema.__relationship[on].__name,
-          where: { [schema.__relationship[on].__primaryKey]: result[on] }
+          where: { [schema.__relationship[on].__primaryKey]: result[on] } as Partial<O>
         })
-
-        result[on] = joinSelector(model, state);
       }
 
       if (schema.__relationship[on].__has === "hasMany") {
@@ -57,13 +56,12 @@ export default function joinFields<
           .forEach((primaryKey: any) => {
 
             // Create the selector from the join statement.
-            const joinSelector = select({
-              fields: fields as any,
+            const match = select(model, state, {
+              fields,
               from: schema.__relationship[on].__name,
-              where: { [schema.__relationship[on].__primaryKey]: primaryKey }
+              where: { [schema.__relationship[on].__primaryKey]: primaryKey } as Partial<O>
             })
 
-            const match = joinSelector(model, state);
             if (match) matches.push(match);
           })
 
@@ -71,7 +69,6 @@ export default function joinFields<
       }
 
       if (join) {
-
         joinFields(result[on], {
           from: schema.__relationship[on].__name,
           join,

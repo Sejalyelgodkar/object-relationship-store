@@ -1,6 +1,5 @@
 import { posts } from "./data";
 import { createStore, createRelationalObject } from "./model";
-import select from "./model/query/select";
 import { JoinOptions } from "./types";
 
 const user = createRelationalObject("user", { id: "number" });
@@ -29,23 +28,22 @@ const store = createStore({
 store.upsert(posts)
 
 type User = { id: number; username: string }
-type Image = { id: number; baseScale: number }
+type Image = { id: number; baseScale: number; thumbnails: Thumbnail[] }
+type Thumbnail = { id: number; height: number; widht: number; uri: string; }
 
-const result = store.query<User>(
-  select<"user", User>({
-    from: "user",
-    fields: "*",
-    where: { id: 1 },
-    join: [
-      {
-        on: "profileImage",
-        fields: "*",
-        join: [
-          {on: "thumbnails", fields: ["height"]}
-        ]
-      } as JoinOptions<Image>
-    ],
-  })
-)
+const result = store.select<"user", User>({
+  from: "user",
+  fields: "*",
+  where: { id: 1 },
+  join: [
+    {
+      on: "profileImage",
+      fields: ["id", "thumbnails"],
+      join: [
+        { on: "thumbnails", fields: ["height"] }
+      ]
+    } as JoinOptions<Image>
+  ],
+})
 
 console.log(result)
