@@ -7,7 +7,11 @@ import selectFields from "./selectFields";
 export default function select<
   N extends string,
   O extends Record<string, any>
->(model: Model<N>, state: State, select: SelectOptions<N, O>) {
+>(
+  model: Model<N>,
+  state: State,
+  select: SelectOptions<N, O>
+): O | O[] | null {
 
   const {
     from,
@@ -101,5 +105,5 @@ export default function select<
 
   }
 
-  return result
+  return result as O | O[] | null;
 }

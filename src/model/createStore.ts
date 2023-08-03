@@ -235,7 +235,10 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
   }
 
 
-  function select<N extends string, O extends Record<string, any>>(options: SelectOptions<N, O>) {
+  function select<
+    N extends string,
+    O extends Record<string, any>
+  >(options: SelectOptions<N, O>): O | O[] | null {
     return querySelect<N, O>(model, state, options);
   }
 
