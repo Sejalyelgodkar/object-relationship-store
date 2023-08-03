@@ -1,18 +1,20 @@
 import { posts } from "./data";
 import { createStore, createRelationalObject } from "./model";
+import select from "./model/query/select";
+import { JoinOptions } from "./types";
 
-const user = createRelationalObject("user", {id: "number"});
-const image = createRelationalObject("image", {id: "number"});
-const thumbnail = createRelationalObject("thumbnail", {id: "number"});
-const post = createRelationalObject("post", {id: "number"});
+const user = createRelationalObject("user", { id: "number" });
+const image = createRelationalObject("image", { id: "number" });
+const thumbnail = createRelationalObject("thumbnail", { id: "number" });
+const post = createRelationalObject("post", { id: "number" });
 
 image.hasMany(thumbnail, "thumbnails")
 user.hasOne(image, "profileImage")
 post.hasMany(image, "images")
 post.hasOne(user)
 user.hasMany(post, "posts")
-image.hasOne(user,"user")
-image.hasOne(post,"post")
+image.hasOne(user, "user")
+image.hasOne(post, "post")
 
 const store = createStore({
   relationalCreators: [user, post, image, thumbnail],
@@ -24,9 +26,26 @@ const store = createStore({
   }
 });
 
-//@ts-ignore
-// console.log(store.model.user.__relationship)
-// store.upsert([...posts, ...posts, ...posts, ...posts, ...posts, ...posts])
 store.upsert(posts)
 
-console.log(store.state.post[10].images[0].post)
+type User = { id: number; username: string }
+type Image = { id: number; baseScale: number }
+
+const result = store.query<User>(
+  select<"user", User>({
+    from: "user",
+    fields: "*",
+    where: { id: 1 },
+    join: [
+      {
+        on: "profileImage",
+        fields: "*",
+        join: [
+          {on: "thumbnails", fields: ["height"]}
+        ]
+      } as JoinOptions<Image>
+    ],
+  })
+)
+
+console.log(result)

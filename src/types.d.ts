@@ -36,3 +36,26 @@ export interface CreateStoreConfig<N extends string = string> {
 export interface State {
   [key: string]: Record<string, any>
 }
+
+export interface SelectOptions<
+  N extends string,
+  O extends Record<string, any>
+> {
+  from: N;
+  where: ((object: O) => boolean) | Partial<O>;
+  fields: (keyof O)[] | "*";
+  join?: JoinOptions<any>[];
+}
+
+export type SelectorFunction<
+  N extends string,
+  O extends Record<string, any>
+> = (model: Model<N>, state: State) => any;
+
+export interface JoinOptions<
+  O extends Record<string, any>
+> {
+  on: string;
+  fields: (keyof O)[] | "*";
+  join?: JoinOptions<any>[];
+}

@@ -1,7 +1,6 @@
-import { CreateStoreConfig, Model, RelationalObject, State } from "../types";
+import { CreateStoreConfig, Model, RelationalObject, SelectorFunction, State } from "../types";
 
 export function createStore<N extends string>(config: CreateStoreConfig<N>) {
-
 
   const {
     relationalCreators,
@@ -41,7 +40,7 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
 
 
   function upsert(object: any) {
-    
+
     const items = Array.isArray(object) ? object : [object];
 
 
@@ -235,10 +234,10 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
   }
 
 
-  function select() {
-    return state
+  function query<O extends Record<string, any>>(selector: SelectorFunction<N, O>) {
+    return selector(model, state);
   }
 
-  return { state, upsert, subscribe }
+  return { state, query, upsert, subscribe }
 }
 
