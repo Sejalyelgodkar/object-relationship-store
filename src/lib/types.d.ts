@@ -40,7 +40,7 @@ type IdentifierFunction<T> = (object: T) => boolean;
 
 export interface CreateStoreConfig<N extends string = string, I extends string = string, O extends string = string> {
   relationalCreators: RelationalCreator<N>[];
-  indexes: RelationalObjectIndex<I, O>[];
+  indexes?: RelationalObjectIndex<I, O>[];
   identifier: { [K in N]: IdentifierFunction<any>; }
 }
 

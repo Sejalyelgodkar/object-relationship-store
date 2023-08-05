@@ -1,4 +1,4 @@
-import { RelationalCreator, RelationalObjectIndex } from "../types";
+import { RelationalCreator, RelationalObjectIndex } from "./types";
 
 export function createRelationalObjectIndex<
   N extends string,

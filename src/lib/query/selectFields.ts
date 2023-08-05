@@ -1,4 +1,4 @@
-import { RelationalObject, SelectOptions } from "../../types";
+import { RelationalObject, SelectOptions } from "../types";
 
 
 /**

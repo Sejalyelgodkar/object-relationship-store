@@ -1,6 +1,6 @@
 {
   "execMap": {
-    "ts": "node -r ts-node/register"
+    "ts": "ts-node --esm"
   },
   "ext": "ts"
 }

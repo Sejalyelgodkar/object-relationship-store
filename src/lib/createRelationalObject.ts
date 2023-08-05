@@ -1,4 +1,4 @@
-import { Has, RelationalCreator, RelationalObject, Schema } from "../types";
+import { Has, RelationalCreator, RelationalObject, Schema } from "./types";
 
 
 function has<N extends string>(object: RelationalObject<N>, __has: Has<N>["__has"], __alias: string,): Has<N> {

@@ -1,6 +1,6 @@
-import { posts } from "./data";
-import { createStore, createRelationalObject, createRelationalObjectIndex } from "./model";
-import { JoinOptions } from "./types";
+import { posts } from "./data.js";
+import { createStore, createRelationalObject, createRelationalObjectIndex } from "./lib/index.js";
+import { JoinOptions } from "./lib/types.js";
 
 const user = createRelationalObject("user", { id: "number" });
 const image = createRelationalObject("image", { id: "number" });

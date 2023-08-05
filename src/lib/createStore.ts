@@ -1,5 +1,5 @@
-import { CreateStoreConfig, Index, Model, RelationalObject, RelationalObjectIndex, Replace, SelectOptions, State, UpsertOptions } from "../types";
-import querySelect from "./query/select";
+import { CreateStoreConfig, Index, Model, RelationalObject, RelationalObjectIndex, Replace, SelectOptions, State, UpsertOptions } from "./types.js";
+import querySelect from "./query/select.js";
 
 export function createStore<
   N extends string,

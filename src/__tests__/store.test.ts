@@ -1,5 +1,5 @@
 import { posts } from "../data";
-import { createRelationalObject, createStore } from "../model";
+import { createRelationalObject, createStore } from "../lib/index";
 
 const v8 = require('v8');
 
