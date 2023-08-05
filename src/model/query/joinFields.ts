@@ -34,7 +34,7 @@ export default function joinFields<
   join
     .forEach(({ on, fields, join }) => {
 
-      if (!result[on]) throw new Error(`Expected "${on}" in object "${from}" to be a primaryKey or an array of primaryKey`);
+      if (!result[on]) return;
 
       if (!schema.__relationship[on]) throw new Error(`Field "${on}" does not exist in object "${from}"`);
 

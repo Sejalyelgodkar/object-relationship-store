@@ -1,5 +1,5 @@
 import { posts } from "./data";
-import { createStore, createRelationalObject } from "./model";
+import { createStore, createRelationalObject, createRelationalObjectIndex } from "./model";
 import { JoinOptions } from "./types";
 
 const user = createRelationalObject("user", { id: "number" });
@@ -12,11 +12,15 @@ user.hasOne(image, "profileImage")
 post.hasMany(image, "images")
 post.hasOne(user)
 user.hasMany(post, "posts")
-image.hasOne(user, "user")
-image.hasOne(post, "post")
+image.hasOne(user)
+image.hasOne(post)
+
+const homeFeed = createRelationalObjectIndex("homeFeed", [post])
+const users = createRelationalObjectIndex("users", [user])
 
 const store = createStore({
   relationalCreators: [user, post, image, thumbnail],
+  indexes: [homeFeed, users],
   identifier: {
     'user': o => !!o.username,
     'image': o => !!o.baseScale,
@@ -25,7 +29,8 @@ const store = createStore({
   }
 });
 
-store.upsert(posts)
+store.upsert([...posts, ...posts], { indexes: ["homeFeed"] })
+store.upsert({ id: 3, username: "John" })
 
 type User = { id: number; username: string }
 type Image = { id: number; baseScale: number; thumbnails: Thumbnail[] }
@@ -34,7 +39,7 @@ type Thumbnail = { id: number; height: number; widht: number; uri: string; }
 const result = store.select<"user", User>({
   from: "user",
   fields: "*",
-  where: { id: 1 },
+  where: "*",
   join: [
     {
       on: "profileImage",
@@ -46,4 +51,23 @@ const result = store.select<"user", User>({
   ],
 })
 
-console.log(result)
+
+const selected = store.selectIndex("homeFeed", {
+  post: {
+    from: "post",
+    fields: ["id"],
+  }
+})
+
+console.log(selected)
+
+store.upsert({ id: 5, caption: "Hey there" }, { indexes: ["homeFeed"] })
+
+const selected2 = store.selectIndex("homeFeed", {
+  post: {
+    from: "post",
+    fields: ["id"],
+  }
+})
+
+console.log(selected2)

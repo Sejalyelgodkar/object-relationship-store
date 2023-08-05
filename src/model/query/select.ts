@@ -1,4 +1,4 @@
-import { Model, RelationalObject, SelectOptions, SelectorFunction, State } from "../../types";
+import { Model, RelationalObject, SelectOptions, State } from "../../types";
 import findMatch from "./findMatch";
 import joinFields from "./joinFields";
 import selectFields from "./selectFields";
@@ -10,7 +10,7 @@ export default function select<
 >(
   model: Model<N>,
   state: State,
-  select: SelectOptions<N, O>
+  selectOptions: SelectOptions<N, O>
 ): O | O[] | null {
 
   const {
@@ -18,18 +18,33 @@ export default function select<
     where,
     fields,
     join
-  } = select;
+  } = selectOptions;
 
-  const isWhereFunc = typeof where === "function";
+  // If where is an array, loop over it and select.
+  if (Array.isArray(where)) return where.flatMap(w => select(model, state, { ...selectOptions, where: w }))
 
-  // @ts-ignore
-  const schema = model[from] as RelationalObject<N>;
-  const table = state[from];
 
   let result: Record<string, any> | null = null;
 
+  // @ts-ignore
+  const schema = model[from] as RelationalObject<N>;
+
+  const table = state[from];
+
+
+  // If where is all objects
+  if (where === "*") {
+
+    // Result will be all objects.
+    result = Object
+      .values(table)
+      .map(object => selectFields(fields, schema, object))
+
+  }
+
+
   // If where is an object
-  if (!isWhereFunc) {
+  if (typeof where === "object") {
 
     // Get the primary key
     const primaryKey = where[schema.__primaryKey];
@@ -60,8 +75,8 @@ export default function select<
   }
 
 
-  // where is a function,
-  if (isWhereFunc) {
+  // where is a function
+  if (typeof where === "function") {
 
     // Result will be an array of objects.
     result = [];

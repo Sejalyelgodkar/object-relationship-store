@@ -1,10 +1,15 @@
-import { CreateStoreConfig, Model, RelationalObject, SelectOptions, SelectorFunction, State } from "../types";
+import { CreateStoreConfig, Index, Model, RelationalObject, RelationalObjectIndex, Replace, SelectOptions, State, UpsertOptions } from "../types";
 import querySelect from "./query/select";
 
-export function createStore<N extends string>(config: CreateStoreConfig<N>) {
+export function createStore<
+  N extends string,
+  I extends string,
+  O extends string,
+>(config: CreateStoreConfig<N, I, O>) {
 
   const {
     relationalCreators,
+    indexes,
     identifier,
   } = config;
 
@@ -23,6 +28,8 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
       return { ...r, [next.__name]: next }
     }, {} as Model<N>)
 
+  // @ts-ignore
+  indexes?.forEach(index => model[index.__name] = index)
 
   function subscribe(listener: () => void) {
     listeners.add(listener);
@@ -40,10 +47,12 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
   }
 
 
-  function upsert(object: any) {
+  function upsert(object: any, options?: UpsertOptions<I>) {
 
     const items = Array.isArray(object) ? object : [object];
 
+    // @ts-ignore
+    const upsertIndexes = (options?.indexes ?? []).map(i => model[i]) as RelationalObjectIndex<I>[];
 
     /**
      *  If this object is related with the parent, then set the relationship
@@ -129,11 +138,34 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
 
       const primaryKey = relationalObject.__primaryKey;
 
+
+      // If the primary key does not exist on the object, we can't go forward.
+      if (!item[primaryKey]) throw new Error(`Expected object "${name}" to have a primaryKey "${primaryKey}".`);
+
+
       // If this table does not exist, initialize it.
       if (!state[name]) state[name] = {};
 
       // If the record does not exist, create an empty obj
       if (!state[name][item[primaryKey]]) state[name][item[primaryKey]] = {};
+
+
+      // If this item is indexed, add it to the index. The index is a set.
+      upsertIndexes
+        .forEach(index => {
+          // If this object does not have an index.
+          if (!index.__objects.includes(name)) return;
+
+          // If it's not defined in state, initialize it.
+          if (!state[index.__name]) (state[index.__name] as Index) = { index: [], objects: {} };
+
+          // If the key already exists in the index, skip it.
+          const key = `${name}-${item[primaryKey]}`;
+          if (!!(state[index.__name] as Index).objects[key]) return;
+
+          (state[index.__name] as Index).index.push(key);
+          (state[index.__name] as Index).objects[key] = { name, primaryKey, primaryKeyValue: item[primaryKey] };
+        })
 
 
       Object
@@ -242,6 +274,36 @@ export function createStore<N extends string>(config: CreateStoreConfig<N>) {
     return querySelect<N, O>(model, state, options);
   }
 
-  return { state, select, upsert, subscribe }
+
+  /**
+   * TODO update the ts here
+   * @param index The name of the index you want to select from
+   * @param options The key is the name of the object, value is SelectOptions
+   */
+  function selectIndex<
+    E extends I,
+    N extends string,
+    T extends Record<string, any>
+  >(index: E, options: { [name: string]: Replace<SelectOptions<N, T>, "where", ((object: any) => boolean)> }) {
+    const indexes = state[index] as Index;
+    const result: Record<string, any>[] = [];
+    indexes
+      .index
+      .forEach((key: string) => {
+        const recordIndex = indexes.objects[key];
+        const queryOptions = options[recordIndex.name];
+
+        if(!queryOptions) throw new Error(`selectIndex() expected SelectOptions for "${recordIndex.name}" in the index "${index}".`);
+        
+        const object = querySelect(model, state, { ...queryOptions, where: { [recordIndex.primaryKey]: recordIndex.primaryKeyValue } } as SelectOptions<any, any>);
+        if (!queryOptions.where) return result.push(object);
+        if (!queryOptions.where(object)) return;
+        result.push(object);
+      });
+    return result
+  }
+
+
+  return { state, select, selectIndex, upsert, subscribe }
 }
 
