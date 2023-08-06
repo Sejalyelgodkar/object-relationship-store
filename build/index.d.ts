@@ -31,6 +31,7 @@ declare namespace ORS {
   export interface RelationalObjectIndex<I extends string, O extends string> {
     __name: I;
     __objects: O[];
+    __sort: ((a: any, b: any) => 1 | -1 | 0) | null;
   }
 
 
@@ -83,7 +84,7 @@ declare namespace ORS {
   }
 
   export interface UpsertOptions<I extends string> {
-    indexes: I[]
+    indexes: I[];
   }
 
   export type Replace<T, K extends keyof T, U> = Omit<T, K> & { [P in K]?: U };
@@ -96,6 +97,6 @@ declare function createRelationalObject<N extends string>(name: N, schema: ORS.S
     primaryKey?: string;
 }): ORS.RelationalCreator<N>;
 
-declare function createRelationalObjectIndex<N extends string, I extends string>(name: I, objects: ORS.RelationalCreator<N>[]): ORS.RelationalObjectIndex<I, N>;
+declare function createRelationalObjectIndex<N extends string, I extends string>(name: I, objects: ORS.RelationalCreator<N>[], sort?: (a: any, b: any) => 1 | -1 | 0): ORS.RelationalObjectIndex<I, N>;
 
 export { ORS, createRelationalObject, createRelationalObjectIndex, createStore };
