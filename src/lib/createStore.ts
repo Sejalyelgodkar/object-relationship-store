@@ -52,7 +52,7 @@ export function createStore<
     const items = Array.isArray(object) ? object : [object];
 
     // @ts-ignore
-    const upsertIndexes = (options?.indexes ?? []).map(i => model[i]) as ORS.RelationalObjectIndex<I, O>[];
+    const upsertIndexes = (options?.indexes ?? []).map(i => ({ model: model[i.index], key: i.key })) as { model: ORS.RelationalObjectIndex<I, O>, key: string }[];
 
     /**
      *  If this object is related with the parent, then set the relationship
@@ -150,22 +150,29 @@ export function createStore<
       if (!state[name][item[primaryKey]]) state[name][item[primaryKey]] = {};
 
 
-      // If this item is indexed, add it to the index. The index is a set.
-      upsertIndexes
-        .forEach(index => {
-          // If this object does not have an index.
-          if (!index.__objects.includes(name as O)) return;
+      // Do not update indexes if we are inside an object,
+      // If we receive posts[], update indexes, if post has a user, we traverse inside, do not update indexes for user or any children of post.
+      if (!parentName) {
 
-          // If it's not defined in state, initialize it.
-          if (!state[index.__name]) (state[index.__name] as ORS.Index) = { index: [], objects: {} };
+        // If this item is indexed, add it to the index. The index is a set.
+        upsertIndexes
+          .forEach(({ model, key }) => {
+            // If this object does not have an index.
+            if (!model.__objects.includes(name as O)) return;
 
-          // If the key already exists in the index, skip it.
-          const key = `${name}-${item[primaryKey]}`;
-          if (!!(state[index.__name] as ORS.Index).objects[key]) return;
+            const indexKey = `${model.__name}-${key}`
 
-          (state[index.__name] as ORS.Index).index.push(key);
-          (state[index.__name] as ORS.Index).objects[key] = { name, primaryKey, primaryKeyValue: item[primaryKey] };
-        })
+            // If it's not defined in state, initialize it.
+            if (!state[indexKey]) (state[indexKey] as ORS.Index) = { index: [], objects: {} };
+
+            // If the key already exists in the index, skip it.
+            const objKey = `${name}-${item[primaryKey]}`;
+            if (!!(state[indexKey] as ORS.Index).objects[objKey]) return;
+
+            (state[indexKey] as ORS.Index).index.push(objKey);
+            (state[indexKey] as ORS.Index).objects[objKey] = { name, primaryKey, primaryKeyValue: item[primaryKey] };
+          })
+      }
 
 
       Object
@@ -265,16 +272,16 @@ export function createStore<
 
     // Sort the indexes if any.
     upsertIndexes
-      .forEach(index => {
-        const sort = index.__sort;
+      .forEach(({ model, key }) => {
+        const sort = model.__sort;
         if (!sort) return;
-
-        (state[index.__name] as ORS.Index)
+        const indexKey = `${model.__name}-${key}`;
+        (state[indexKey] as ORS.Index)
           .index
           .sort((a, b) => {
-            const itemA = (state[index.__name] as ORS.Index).objects[a]
-            const itemB = (state[index.__name] as ORS.Index).objects[b]
-            return sort(state[itemA.name][itemA.primaryKeyValue], state[itemA.name][itemB.primaryKeyValue])
+            const itemA = (state[indexKey] as ORS.Index).objects[a]
+            const itemB = (state[indexKey] as ORS.Index).objects[b]
+            return sort(state[itemA.name][itemA.primaryKeyValue], state[itemB.name][itemB.primaryKeyValue])
           })
       })
 
@@ -301,7 +308,7 @@ export function createStore<
     E extends I,
     N extends string,
     T extends Record<string, any>
-  >(index: E, options?: Record<string, ORS.Replace<ORS.SelectOptions<N, T>, "where", ((object: any) => boolean)>>) => {
+  >(index: `${E}-${string}`, options?: Record<string, ORS.Replace<ORS.SelectOptions<N, T>, "where", ((object: any) => boolean)>>) => {
     const indexes = state[index] as ORS.Index;
     const result: Record<string, any>[] = [];
     if (!indexes) return null;

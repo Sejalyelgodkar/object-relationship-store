@@ -78,7 +78,7 @@ export namespace ORS {
   }
 
   export interface UpsertOptions<I extends string> {
-    indexes: I[];
+    indexes: { index: I, key: string }[];
   }
 
   export type Replace<T, K extends keyof T, U> = Omit<T, K> & { [P in K]?: U };

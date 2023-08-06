@@ -1,7 +1,7 @@
 declare function createStore<N extends string, I extends string, O extends string>(config: ORS.CreateStoreConfig<N, I, O>): {
     getState: () => ORS.State;
     select: <N_1 extends string, O_1 extends Record<string, any>>(options: ORS.SelectOptions<N_1, O_1>) => O_1 | O_1[] | null;
-    selectIndex: <E extends I, N_2 extends string, T extends Record<string, any>>(index: E, options?: Record<string, ORS.Replace<ORS.SelectOptions<N_2, T>, "where", (object: any) => boolean>> | undefined) => Record<string, any>[] | null;
+    selectIndex: <E extends I, N_2 extends string, T extends Record<string, any>>(index: `${E}-${string}`, options?: Record<string, ORS.Replace<ORS.SelectOptions<N_2, T>, "where", (object: any) => boolean>> | undefined) => Record<string, any>[] | null;
     upsert: (object: any, options?: ORS.UpsertOptions<I>) => void;
     subscribe: (listener: () => void) => () => boolean;
 };
@@ -84,7 +84,7 @@ declare namespace ORS {
   }
 
   export interface UpsertOptions<I extends string> {
-    indexes: I[];
+    indexes: { index: I, key: string }[];
   }
 
   export type Replace<T, K extends keyof T, U> = Omit<T, K> & { [P in K]?: U };
