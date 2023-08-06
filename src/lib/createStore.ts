@@ -31,6 +31,7 @@ export function createStore<
   // @ts-ignore
   indexes?.forEach(index => model[index.__name] = index)
 
+
   function subscribe(listener: () => void) {
     listeners.add(listener);
     return () => listeners.delete(listener);
@@ -307,16 +308,16 @@ export function createStore<
   const selectIndex = memo(<
     E extends I,
     N extends string,
-    T extends Record<string, any>
-  >(index: `${E}-${string}`, options?: Record<string, ORS.Replace<ORS.SelectOptions<N, T>, "where", ((object: any) => boolean)>>) => {
+    O extends Record<string, any>
+  >(index: `${E}-${string}`, options?: Record<string, ORS.Replace<ORS.SelectOptions<N, O>, "where", ((object: any) => boolean)>>) => {
     const indexes = state[index] as ORS.Index;
-    const result: Record<string, any>[] = [];
+    const result: O[] = [];
     if (!indexes) return null;
     indexes
       .index
       .forEach((key: string) => {
         const recordIndex = indexes.objects[key];
-        const queryOptions = options ? options[recordIndex.name] : { from: recordIndex.name, fields: "*" } as ORS.Replace<ORS.SelectOptions<N, T>, "where", ((object: any) => boolean)>;
+        const queryOptions = options ? options[recordIndex.name] : { from: recordIndex.name, fields: "*" } as ORS.Replace<ORS.SelectOptions<N, O>, "where", ((object: any) => boolean)>;
 
         if (!queryOptions) throw new Error(`selectIndex() expected SelectOptions for "${recordIndex.name}" in the index "${index}".`);
 
@@ -330,11 +331,18 @@ export function createStore<
   })
 
 
-  function getState() {
-    return state;
+  function getState() { return state; }
+
+
+  function purge() {
+    for (const key in state) {
+      if (!Object.prototype.hasOwnProperty.call(state, key)) return;
+      delete state[key];
+    }
   }
 
-  return { getState, select, selectIndex, upsert, subscribe }
+
+  return { getState, purge, select, selectIndex, upsert, subscribe }
 }
 
 

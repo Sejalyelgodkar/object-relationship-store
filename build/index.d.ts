@@ -1,7 +1,8 @@
 declare function createStore<N extends string, I extends string, O extends string>(config: ORS.CreateStoreConfig<N, I, O>): {
     getState: () => ORS.State;
+    purge: () => void;
     select: <N_1 extends string, O_1 extends Record<string, any>>(options: ORS.SelectOptions<N_1, O_1>) => O_1 | O_1[] | null;
-    selectIndex: <E extends I, N_2 extends string, T extends Record<string, any>>(index: `${E}-${string}`, options?: Record<string, ORS.Replace<ORS.SelectOptions<N_2, T>, "where", (object: any) => boolean>> | undefined) => Record<string, any>[] | null;
+    selectIndex: <E extends I, N_2 extends string, O_2 extends Record<string, any>>(index: `${E}-${string}`, options?: Record<string, ORS.Replace<ORS.SelectOptions<N_2, O_2>, "where", (object: any) => boolean>> | undefined) => O_2[] | null;
     upsert: (object: any, options?: ORS.UpsertOptions<I>) => void;
     subscribe: (listener: () => void) => () => boolean;
 };
