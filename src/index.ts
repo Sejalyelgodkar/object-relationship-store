@@ -51,22 +51,17 @@ const result = store.select<"post", any>({
   ],
 })
 
-// const selected = store.selectIndex("homeFeed", {
-//   post: {
-//     from: "post",
-//     fields: ["id"],
-//   }
-// })
+const selected = store.selectIndex("homeFeed")
 
-// console.log(selected)
+console.log(selected)
 
-// store.upsert({ id: 5, caption: "Hey there" }, { indexes: ["homeFeed"] })
+store.upsert({ id: 5, caption: "Hey there" }, { indexes: ["homeFeed"] })
 
-// const selected2 = store.selectIndex("homeFeed", {
-//   post: {
-//     from: "post",
-//     fields: ["id"],
-//   }
-// })
+const selected2 = store.selectIndex("homeFeed", {
+  post: {
+    from: "post",
+    fields: ["id"],
+  }
+})
 
-// console.log(selected2)
+console.log(selected2)

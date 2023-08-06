@@ -284,7 +284,7 @@ export function createStore<
     E extends I,
     N extends string,
     T extends Record<string, any>
-  >(index: E, options: Record<string, ORS.Replace<ORS.SelectOptions<N, T>, "where", ((object: any) => boolean)>>) => {
+  >(index: E, options?: Record<string, ORS.Replace<ORS.SelectOptions<N, T>, "where", ((object: any) => boolean)>>) => {
     const indexes = state[index] as ORS.Index;
     const result: Record<string, any>[] = [];
     if (!indexes) return null;
@@ -292,14 +292,14 @@ export function createStore<
       .index
       .forEach((key: string) => {
         const recordIndex = indexes.objects[key];
-        const queryOptions = options[recordIndex.name];
+        const queryOptions = options ? options[recordIndex.name] : { from: recordIndex.name, fields: "*" } as ORS.Replace<ORS.SelectOptions<N, T>, "where", ((object: any) => boolean)>;
 
         if (!queryOptions) throw new Error(`selectIndex() expected SelectOptions for "${recordIndex.name}" in the index "${index}".`);
 
         const object = querySelect(model, state, { ...queryOptions, where: { [recordIndex.primaryKey]: recordIndex.primaryKeyValue } } as ORS.SelectOptions<any, any>);
         if (!object) return;
-        if (!queryOptions.where) return result.push(object);
-        if (!queryOptions.where(object)) return;
+        if (!queryOptions?.where) return result.push(object);
+        if (!queryOptions?.where(object)) return;
         result.push(object);
       });
     return result
