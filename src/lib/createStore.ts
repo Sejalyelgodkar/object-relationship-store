@@ -52,7 +52,7 @@ export function createStore<
     const items = Array.isArray(object) ? object : [object];
 
     // @ts-ignore
-    const upsertIndexes = (options?.indexes ?? []).map(i => model[i]) as RelationalObjectIndex<I>[];
+    const upsertIndexes = (options?.indexes ?? []).map(i => model[i]) as ORS.RelationalObjectIndex<I, O>[];
 
     /**
      *  If this object is related with the parent, then set the relationship
@@ -154,7 +154,7 @@ export function createStore<
       upsertIndexes
         .forEach(index => {
           // If this object does not have an index.
-          if (!index.__objects.includes(name)) return;
+          if (!index.__objects.includes(name as O)) return;
 
           // If it's not defined in state, initialize it.
           if (!state[index.__name]) (state[index.__name] as ORS.Index) = { index: [], objects: {} };
@@ -263,6 +263,23 @@ export function createStore<
     items.forEach(item => upsertOne({ item }))
 
 
+    // Sort the indexes if any.
+    upsertIndexes
+      .forEach(index => {
+        const sort = index.__sort;
+        if (!sort) return;
+
+        (state[index.__name] as ORS.Index)
+          .index
+          .sort((a, b) => {
+            const itemA = (state[index.__name] as ORS.Index).objects[a]
+            const itemB = (state[index.__name] as ORS.Index).objects[b]
+            return sort(state[itemA.name][itemA.primaryKeyValue], state[itemA.name][itemB.primaryKeyValue])
+          })
+      })
+
+
+
     listeners.forEach(listener => listener());
   }
 
@@ -304,6 +321,7 @@ export function createStore<
       });
     return result
   })
+
 
   function getState() {
     return state;

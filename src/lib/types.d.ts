@@ -25,6 +25,7 @@ export namespace ORS {
   export interface RelationalObjectIndex<I extends string, O extends string> {
     __name: I;
     __objects: O[];
+    __sort: ((a: any, b: any) => 1 | -1 | 0) | null;
   }
 
 
@@ -77,7 +78,7 @@ export namespace ORS {
   }
 
   export interface UpsertOptions<I extends string> {
-    indexes: I[]
+    indexes: I[];
   }
 
   export type Replace<T, K extends keyof T, U> = Omit<T, K> & { [P in K]?: U };

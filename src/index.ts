@@ -1,6 +1,5 @@
 import { posts } from "./data.js";
 import { createStore, createRelationalObject, createRelationalObjectIndex } from "./lib/index.js";
-import { type ORS } from "./lib/types.js";
 
 const user = createRelationalObject("user", { id: "number" });
 const image = createRelationalObject("image", { id: "number" });
@@ -51,9 +50,9 @@ const result = store.select<"post", any>({
   ],
 })
 
-const selected = store.selectIndex("homeFeed")
+// const selected = store.selectIndex("homeFeed")
 
-console.log(selected)
+// console.log(selected)
 
 store.upsert({ id: 5, caption: "Hey there" }, { indexes: ["homeFeed"] })
 
