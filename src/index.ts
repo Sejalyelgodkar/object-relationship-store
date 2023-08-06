@@ -1,6 +1,6 @@
 import { posts } from "./data.js";
 import { createStore, createRelationalObject, createRelationalObjectIndex } from "./lib/index.js";
-import { JoinOptions } from "./lib/types.js";
+import { type ORS } from "./lib/types.js";
 
 const user = createRelationalObject("user", { id: "number" });
 const image = createRelationalObject("image", { id: "number" });
@@ -36,38 +36,37 @@ type User = { id: number; username: string }
 type Image = { id: number; baseScale: number; thumbnails: Thumbnail[] }
 type Thumbnail = { id: number; height: number; widht: number; uri: string; }
 
-const result = store.select<"user", User>({
-  from: "user",
-  fields: "*",
-  where: "*",
+const result = store.select<"post", any>({
+  from: "post",
+  fields: ["id", "images"],
+  where: { id: 10 },
   join: [
     {
-      on: "profileImage",
+      on: "images",
       fields: ["id", "thumbnails"],
       join: [
         { on: "thumbnails", fields: ["height"] }
       ]
-    } as JoinOptions<Image>
+    }
   ],
 })
 
+// const selected = store.selectIndex("homeFeed", {
+//   post: {
+//     from: "post",
+//     fields: ["id"],
+//   }
+// })
 
-const selected = store.selectIndex("homeFeed", {
-  post: {
-    from: "post",
-    fields: ["id"],
-  }
-})
+// console.log(selected)
 
-console.log(selected)
+// store.upsert({ id: 5, caption: "Hey there" }, { indexes: ["homeFeed"] })
 
-store.upsert({ id: 5, caption: "Hey there" }, { indexes: ["homeFeed"] })
+// const selected2 = store.selectIndex("homeFeed", {
+//   post: {
+//     from: "post",
+//     fields: ["id"],
+//   }
+// })
 
-const selected2 = store.selectIndex("homeFeed", {
-  post: {
-    from: "post",
-    fields: ["id"],
-  }
-})
-
-console.log(selected2)
+// console.log(selected2)

@@ -1,7 +1,7 @@
-import { Has, RelationalCreator, RelationalObject, Schema } from "./types";
+import { type ORS} from "./types";
 
 
-function has<N extends string>(object: RelationalObject<N>, __has: Has<N>["__has"], __alias: string,): Has<N> {
+function has<N extends string>(object: ORS.RelationalObject<N>, __has: ORS.Has<N>["__has"], __alias: string,): ORS.Has<N> {
   const {
     __name,
     __primaryKey,
@@ -22,9 +22,9 @@ export function createRelationalObject<
 N extends string
 >(
   name: N,
-  schema: Schema,
+  schema: ORS.Schema,
   options?: { primaryKey?: string }
-): RelationalCreator<N> {
+): ORS.RelationalCreator<N> {
 
   const object = {
     ...schema,
@@ -35,8 +35,8 @@ N extends string
 
   Object.setPrototypeOf(object, {
 
-    hasOne(object: RelationalObject<N>, as?: string) {
-      const self = this as unknown as RelationalObject<N>;
+    hasOne(object: ORS.RelationalObject<N>, as?: string) {
+      const self = this as unknown as ORS.RelationalObject<N>;
       const name: any = as ?? object.__name;
 
       const existing = Object.entries(self.__relationship).find(([alias, has]) => has.__name === object.__name);
@@ -54,8 +54,8 @@ N extends string
       return this;
     },
 
-    hasMany(object: RelationalObject<N>, as?: string) {
-      const self = this as unknown as RelationalObject<N>;
+    hasMany(object: ORS.RelationalObject<N>, as?: string) {
+      const self = this as unknown as ORS.RelationalObject<N>;
       const name: any = as ?? object.__name;
 
       const existing = Object.entries(self.__relationship).find(([alias, has]) => has.__name === object.__name)
@@ -75,5 +75,5 @@ N extends string
 
   });
 
-  return object as unknown as RelationalCreator<N>
+  return object as unknown as ORS.RelationalCreator<N>
 }

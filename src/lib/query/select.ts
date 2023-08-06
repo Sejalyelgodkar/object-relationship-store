@@ -1,4 +1,4 @@
-import { JoinOptions, Model, RelationalObject, SelectOptions, State } from "../types.js";
+import { type ORS } from "../types.js";
 import findMatch from "./findMatch.js";
 import selectFields from "./selectFields.js";
 
@@ -7,9 +7,9 @@ export default function select<
   N extends string,
   O extends Record<string, any>
 >(
-  model: Model<N>,
-  state: State,
-  selectOptions: SelectOptions<N, O>
+  model: ORS.Model<N>,
+  state: ORS.State,
+  selectOptions: ORS.SelectOptions<N, O>
 ): O | O[] | null {
 
   const {
@@ -30,6 +30,7 @@ export default function select<
 
   const table = state[from];
 
+  if (!table) return null;
 
   // If where is all objects
   if (where === "*") {
@@ -47,7 +48,6 @@ export default function select<
 
     // Get the primary key
     const primaryKey = where[schema.__primaryKey];
-
 
     // If the primary key exists, return the related object.
     if (primaryKey) {
@@ -137,10 +137,10 @@ function joinFields<
 >(
   result: Record<string, any>,
   options: {
-    join: JoinOptions<O>[];
+    join: ORS.JoinOptions<O>[];
     from: string;
-    model: Model<N>;
-    state: State
+    model: ORS.Model<N>;
+    state: ORS.State
   }
 ) {
 
@@ -155,7 +155,7 @@ function joinFields<
   const schema = model[from] as RelationalObject<N>;
 
   join
-    .forEach(({ on, fields, join }) => {
+    .forEach(({ on, fields, join: innerJoin }) => {
 
       if (!result[on]) return;
 
@@ -191,13 +191,30 @@ function joinFields<
         result[on] = matches;
       }
 
-      if (join) {
-        joinFields(result[on], {
-          from: schema.__relationship[on].__name,
-          join,
-          model,
-          state
-        })
+      if (innerJoin) {
+
+        // Check the relationship of the parent, if it is a has one, proceed as normal
+        if (schema.__relationship[on].__has === "hasOne") {
+          joinFields(result[on], {
+            from: schema.__relationship[on].__name,
+            join: innerJoin,
+            model,
+            state
+          })
+        }
+
+        // If the relation is a hasMany, loop over each item and join.
+        if (schema.__relationship[on].__has === "hasMany") {
+          result[on]
+            .forEach((object: any) => {
+              joinFields(object, {
+                from: schema.__relationship[on].__name,
+                join: innerJoin,
+                model,
+                state
+              })
+            })
+        }
       }
 
     })

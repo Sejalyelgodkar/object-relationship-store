@@ -1,11 +1,11 @@
-import { CreateStoreConfig, Index, Model, RelationalObject, RelationalObjectIndex, Replace, SelectOptions, State, UpsertOptions } from "./types.js";
+import { type ORS } from "./types.js";
 import querySelect from "./query/select.js";
 
 export function createStore<
   N extends string,
   I extends string,
   O extends string,
->(config: CreateStoreConfig<N, I, O>) {
+>(config: ORS.CreateStoreConfig<N, I, O>) {
 
   const {
     relationalCreators,
@@ -14,7 +14,7 @@ export function createStore<
   } = config;
 
 
-  const state = {} as State;
+  const state = {} as ORS.State;
 
 
   const listeners = new Set<() => void>();
@@ -26,7 +26,7 @@ export function createStore<
       const k = next.__relationship[next.__primaryKey]?.__name ?? next.__primaryKey;
       if (!(next as any)[k]) throw new Error(`The table "${next.__name}" does not have a primary key (pk) "${t.__primaryKey}", pk should be listed here ${JSON.stringify(t)}`);
       return { ...r, [next.__name]: next }
-    }, {} as Model<N>)
+    }, {} as ORS.Model<N>)
 
   // @ts-ignore
   indexes?.forEach(index => model[index.__name] = index)
@@ -47,7 +47,7 @@ export function createStore<
   }
 
 
-  function upsert(object: any, options?: UpsertOptions<I>) {
+  function upsert(object: any, options?: ORS.UpsertOptions<I>) {
 
     const items = Array.isArray(object) ? object : [object];
 
@@ -68,7 +68,7 @@ export function createStore<
       parentName: string;
       primaryKey: string;
       parentPrimaryKey: string;
-      relationalObject: RelationalObject;
+      relationalObject: ORS.RelationalObject;
     }) {
 
       const {
@@ -157,14 +157,14 @@ export function createStore<
           if (!index.__objects.includes(name)) return;
 
           // If it's not defined in state, initialize it.
-          if (!state[index.__name]) (state[index.__name] as Index) = { index: [], objects: {} };
+          if (!state[index.__name]) (state[index.__name] as ORS.Index) = { index: [], objects: {} };
 
           // If the key already exists in the index, skip it.
           const key = `${name}-${item[primaryKey]}`;
-          if (!!(state[index.__name] as Index).objects[key]) return;
+          if (!!(state[index.__name] as ORS.Index).objects[key]) return;
 
-          (state[index.__name] as Index).index.push(key);
-          (state[index.__name] as Index).objects[key] = { name, primaryKey, primaryKeyValue: item[primaryKey] };
+          (state[index.__name] as ORS.Index).index.push(key);
+          (state[index.__name] as ORS.Index).objects[key] = { name, primaryKey, primaryKeyValue: item[primaryKey] };
         })
 
 
@@ -267,12 +267,12 @@ export function createStore<
   }
 
 
-  function select<
+  const select = memo(<
     N extends string,
     O extends Record<string, any>
-  >(options: SelectOptions<N, O>): O | O[] | null {
+  >(options: ORS.SelectOptions<N, O>): O | O[] | null => {
     return querySelect<N, O>(model, state, options);
-  }
+  })
 
 
   /**
@@ -280,30 +280,53 @@ export function createStore<
    * @param index The name of the index you want to select from
    * @param options The key is the name of the object, value is SelectOptions
    */
-  function selectIndex<
+  const selectIndex = memo(<
     E extends I,
     N extends string,
     T extends Record<string, any>
-  >(index: E, options: { [name: string]: Replace<SelectOptions<N, T>, "where", ((object: any) => boolean)> }) {
-    const indexes = state[index] as Index;
+  >(index: E, options: Record<string, ORS.Replace<ORS.SelectOptions<N, T>, "where", ((object: any) => boolean)>>) => {
+    const indexes = state[index] as ORS.Index;
     const result: Record<string, any>[] = [];
+    if (!indexes) return null;
     indexes
       .index
       .forEach((key: string) => {
         const recordIndex = indexes.objects[key];
         const queryOptions = options[recordIndex.name];
 
-        if(!queryOptions) throw new Error(`selectIndex() expected SelectOptions for "${recordIndex.name}" in the index "${index}".`);
-        
-        const object = querySelect(model, state, { ...queryOptions, where: { [recordIndex.primaryKey]: recordIndex.primaryKeyValue } } as SelectOptions<any, any>);
+        if (!queryOptions) throw new Error(`selectIndex() expected SelectOptions for "${recordIndex.name}" in the index "${index}".`);
+
+        const object = querySelect(model, state, { ...queryOptions, where: { [recordIndex.primaryKey]: recordIndex.primaryKeyValue } } as ORS.SelectOptions<any, any>);
+        if (!object) return;
         if (!queryOptions.where) return result.push(object);
         if (!queryOptions.where(object)) return;
         result.push(object);
       });
     return result
+  })
+
+  function getState() {
+    return state;
   }
 
-
-  return { state, select, selectIndex, upsert, subscribe }
+  return { getState, select, selectIndex, upsert, subscribe }
 }
 
+
+function memo<T extends (...args: any[]) => any>(func: T): T {
+  const cache: { [key: string]: ReturnType<T> } = {};
+
+  return function (...args: Parameters<T>): ReturnType<T> {
+    const key = JSON.stringify(args);
+    const result = func(...args);
+
+    if (cache[key]) {
+      if (JSON.stringify(cache[key]) === JSON.stringify(result)) return cache[key];
+      cache[key] = result;
+      return result;
+    }
+
+    cache[key] = result;
+    return result;
+  } as T;
+}

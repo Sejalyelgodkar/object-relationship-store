@@ -1,4 +1,4 @@
-import { RelationalObject, SelectOptions } from "../types";
+import { type ORS } from "../types";
 
 
 /**
@@ -14,8 +14,8 @@ export default function selectFields<
   N extends string,
   O extends Record<string, any>
 >(
-  fields: SelectOptions<N, O>["fields"],
-  schema: RelationalObject<N>,
+  fields: ORS.SelectOptions<N, O>["fields"],
+  schema: ORS.RelationalObject<N>,
   object: Record<string, any>
 ) {
 
