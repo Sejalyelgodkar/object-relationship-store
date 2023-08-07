@@ -23,7 +23,7 @@ export default function select<
   if (Array.isArray(where)) return where.flatMap(w => select(model, state, { ...selectOptions, where: w }))
 
 
-  let result: Record<string, any> | null = null;
+  let result: O | O[] | null = null;
 
   // @ts-ignore
   const schema = model[from] as RelationalObject<N>;
@@ -38,7 +38,7 @@ export default function select<
     // Result will be all objects.
     result = Object
       .values(table)
-      .map(object => selectFields(fields, schema, object))
+      .map(object => selectFields<string, O>(fields, schema, object))
 
   }
 
@@ -93,10 +93,7 @@ export default function select<
   // If there is a result and we need to join some fields
   if (result && join) {
 
-    const isAnArray = Array.isArray(result);
-
-    if (isAnArray) {
-
+    if (Array.isArray(result)) {
       result
         .forEach((object: any) => {
           joinFields<N, O>(object, {
@@ -108,7 +105,7 @@ export default function select<
         })
     }
 
-    if (!isAnArray) {
+    if (!Array.isArray(result)) {
       joinFields<N, O>(result, {
         join,
         from,
@@ -135,9 +132,9 @@ function joinFields<
   N extends string,
   O extends Record<string, any>
 >(
-  result: Record<string, any>,
+  result: O,
   options: {
-    join: ORS.JoinOptions<O>[];
+    join: ORS.JoinOptions<keyof O>[];
     from: string;
     model: ORS.Model<N>;
     state: ORS.State
@@ -159,7 +156,7 @@ function joinFields<
 
       if (!result[on]) return;
 
-      if (!schema.__relationship[on]) throw new Error(`Field "${on}" does not exist in object "${from}"`);
+      if (!schema.__relationship[on]) throw new Error(`Field "${String(on)}" does not exist in object "${from}"`);
 
       if (schema.__relationship[on].__has === "hasOne") {
 
@@ -168,7 +165,7 @@ function joinFields<
           fields,
           from: schema.__relationship[on].__name,
           where: { [schema.__relationship[on].__primaryKey]: result[on] } as Partial<O>
-        })
+        }) as any
       }
 
       if (schema.__relationship[on].__has === "hasMany") {
@@ -188,7 +185,7 @@ function joinFields<
             if (match) matches.push(match);
           })
 
-        result[on] = matches;
+        result[on] = matches  as any;
       }
 
       if (innerJoin) {

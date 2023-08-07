@@ -16,18 +16,18 @@ export default function selectFields<
 >(
   fields: ORS.SelectOptions<N, O>["fields"],
   schema: ORS.RelationalObject<N>,
-  object: Record<string, any>
+  object: O
 ) {
 
-  const result: Record<string, any> = {};
+  const result: O = {} as O;
 
-  function mapOverFields(fields: string[]) {
+  function mapOverFields(fields: (keyof O)[]) {
     fields
       .forEach((field) => {
 
         const value = object[field];
 
-        const relation = schema.__relationship[field];
+        const relation = schema.__relationship[field as string];
 
         // If this field is not a related field, set it.
         if (!relation) return result[field] = value;

@@ -7,7 +7,7 @@ export namespace ORS {
   }
 
   export interface RelationalObject<N extends string = string> {
-    [field: symbol]: Primitive | "hasOne" | "hasMany";
+    [field: string]: Primitive | "hasOne" | "hasMany";
     __name: N;
     __primaryKey: string;
     __relationship: Record<string, Has<N>>;
@@ -71,7 +71,7 @@ export namespace ORS {
     from: N;
     where: Where<O> | Where<O>[] | "*";
     fields: (keyof O)[] | "*";
-    join?: JoinOptions<any>[];
+    join?: JoinOptions<keyof O>[];
   }
 
   export type SelectorFunction<
@@ -79,12 +79,10 @@ export namespace ORS {
     O extends Record<string, any>
   > = (model: Model<N>, state: State) => any;
 
-  export interface JoinOptions<
-    O extends Record<string, any>
-  > {
-    on: string;
-    fields: (keyof O)[] | "*";
-    join?: JoinOptions<any>[];
+  export interface JoinOptions<K extends string | number | symbol> {
+    on: K | ({} & string);
+    fields: string[] | "*";
+    join?: JoinOptions<K>[];
   }
 
   export interface UpsertOptions<I extends string> {
