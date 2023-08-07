@@ -45,6 +45,16 @@ export namespace ORS {
   export interface CreateStoreConfig<N extends string = string, I extends string = string, O extends string = string> {
     relationalCreators: RelationalCreator<N>[];
     indexes?: RelationalObjectIndex<I, O>[];
+
+    /**
+     * Identifies the object by testing it against the indetifier functions.
+     * Optionally, you can also add the key __identify__ in the object, with the value as the name of the object and it will use that as
+     * an alternative to the identifier.
+     * Using __identify__ is faster.
+     * 
+     * const post = {id: 1, content: "Hello World", \_\_identify\_\_: "post"}
+     * 
+     */
     identifier: { [K in N]: IdentifierFunction<any>; }
   }
 
