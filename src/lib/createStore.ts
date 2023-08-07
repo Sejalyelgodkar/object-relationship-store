@@ -47,7 +47,7 @@ export function createStore<
    * @returns The name of the object
    */
   function identify(item: any): string {
-    if (item.__indentify__) return item.__indentify__;
+    if (item.__identify__) return item.__identify__;
     for (const key in identifier) {
       if (!Object.prototype.hasOwnProperty.call(identifier, key)) continue;
       const validator = identifier[key];
