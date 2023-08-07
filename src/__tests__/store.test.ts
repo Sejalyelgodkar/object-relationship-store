@@ -1,5 +1,5 @@
-import { posts } from "../data.js";
-import { createRelationalObject, createStore } from "../lib/index.js";
+import { posts } from "../data";
+import { createRelationalObject, createStore } from "../lib/index";
 import v8 from "v8";
 
 function getObjectMemoryUsageInMB(object: any) {

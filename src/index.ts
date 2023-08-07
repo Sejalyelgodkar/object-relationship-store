@@ -1,5 +1,5 @@
-import { posts } from "./data.js";
-import { createStore, createRelationalObject, createRelationalObjectIndex } from "./lib/index.js";
+import { posts } from "./data";
+import { createStore, createRelationalObject, createRelationalObjectIndex } from "./lib/index";
 
 const user = createRelationalObject("user", { id: "number" });
 const image = createRelationalObject("image", { id: "number" });

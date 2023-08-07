@@ -1,7 +1,7 @@
-import { createRelationalObject } from "./createRelationalObject.js";
-import { createRelationalObjectIndex } from "./createRelationalObjectIndex.js";
-import { createStore } from "./createStore.js";
-import { type ORS} from "./types.js"
+import { createRelationalObject } from "./createRelationalObject";
+import { createRelationalObjectIndex } from "./createRelationalObjectIndex";
+import { createStore } from "./createStore";
+import { type ORS} from "./types"
 
 export {
   createRelationalObject,

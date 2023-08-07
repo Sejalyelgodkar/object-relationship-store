@@ -1,6 +1,6 @@
-import { type ORS } from "../types.js";
-import findMatch from "./findMatch.js";
-import selectFields from "./selectFields.js";
+import { type ORS } from "../types";
+import findMatch from "./findMatch";
+import selectFields from "./selectFields";
 
 
 export default function select<

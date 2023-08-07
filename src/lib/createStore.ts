@@ -1,5 +1,6 @@
-import { type ORS } from "./types.js";
-import querySelect from "./query/select.js";
+import { type ORS } from "./types";
+import querySelect from "./query/select";
+import { memo } from "./utils";
 
 export function createStore<
   N extends string,
@@ -343,23 +344,4 @@ export function createStore<
 
 
   return { getState, purge, select, selectIndex, upsert, subscribe }
-}
-
-
-function memo<T extends (...args: any[]) => any>(func: T): T {
-  const cache: { [key: string]: ReturnType<T> } = {};
-
-  return function (...args: Parameters<T>): ReturnType<T> {
-    const key = JSON.stringify(args);
-    const result = func(...args);
-
-    if (cache[key]) {
-      if (JSON.stringify(cache[key]) === JSON.stringify(result)) return cache[key];
-      cache[key] = result;
-      return result;
-    }
-
-    cache[key] = result;
-    return result;
-  } as T;
 }

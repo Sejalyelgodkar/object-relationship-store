@@ -2,7 +2,6 @@
   "name": "@jjmyers/object-relationship-store",
   "version": "1.0.0",
   "description": "A javascript object relationship store.",
-  "type": "module",
   "main": "build/index.js",
   "module": "build/index.esm.js",
   "types": "build/index.d.ts",
