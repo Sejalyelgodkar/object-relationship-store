@@ -41,7 +41,7 @@ export function createStore<
 
   /**
    * Identifies the object by testing it against the indetifier functions.
-   * Optionally, you can also add the key __identify__ with the value as the name of the object and it will use that as
+   * Optionally, you can also add the key \_\_identify\_\_ with the value as the name of the object and it will use that as
    * an alternative to the identifier
    * @param item The object we want to indentify
    * @returns The name of the object
