@@ -284,8 +284,8 @@ export function createStore<
     upsertIndexes
       .forEach(({ model, key }) => {
         const sort = model.__sort;
-        if (!sort) return;
         const indexKey = `${model.__name}-${key}`;
+        if (!sort || !state[indexKey]) return;
         (state[indexKey] as ORS.Index)
           .index
           .sort((a, b) => {

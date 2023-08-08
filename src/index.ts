@@ -14,7 +14,7 @@ user.hasMany(post, "posts")
 image.hasOne(user)
 image.hasOne(post)
 
-const homeFeed = createRelationalObjectIndex("homeFeed", [post, user])
+const homeFeed = createRelationalObjectIndex("homeFeed", [post, user], () => -1)
 const users = createRelationalObjectIndex("users", [user])
 
 const store = createStore({
@@ -67,4 +67,6 @@ const selected2 = store.selectIndex("homeFeed-1", {
   }
 })
 
-console.log(selected2)
+// @ts-ignore
+store.upsert([], { indexes: [{ index: "homeFeed", key: "10" }] })
+// console.log(selected2)
