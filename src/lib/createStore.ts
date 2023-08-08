@@ -57,6 +57,7 @@ export function createStore<
   }
 
 
+  
   function upsert(object: any, options?: ORS.UpsertOptions<I>) {
 
     const items = Array.isArray(object) ? object : [object];
@@ -167,6 +168,12 @@ export function createStore<
         // If this item is indexed, add it to the index. The index is a set.
         upsertIndexes
           .forEach(({ model, key }) => {
+
+            // An optional key that can be added to an object to skip indexing.
+            // This is useful when returning an array of the same objects, like comments, and you only one one to be added to the index,
+            // the others were just for updates.
+            if (item.__skipIndex__) return;
+
             // If this object does not have an index.
             if (!model.__objects.includes(name as O)) return;
 
