@@ -1,5 +1,7 @@
 ## @jjmyers/object-relationship-store
 
+***WARNING: just trying out an idea.***
+
 Utilizes javascripts object references to normalize data and keep relationships.
 
 Built to work with react's **useSyncExternalStore()** hook.
