@@ -1,6 +1,6 @@
 ## @jjmyers/object-relationship-store
 
-***WARNING: just trying out an idea.***
+***WARNING: experimental.***
 
 Utilizes javascripts object references to normalize data and keep relationships.
 
