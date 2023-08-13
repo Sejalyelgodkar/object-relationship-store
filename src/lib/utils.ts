@@ -14,17 +14,18 @@ export function deepEqual(obj1: any, obj2: any) {
 }
 
 
-
+// TODO if where is a function,
+// this caching fails.
+// Probably a key need to be passed from the outside
 export function memo<T extends (...args: any[]) => any>(func: T): T {
-  const cache: { [key: string]: ReturnType<T> } = {};
+  const cache = new Map<string, ReturnType<T>>();
 
   return function (...args: Parameters<T>): ReturnType<T> {
     const key = JSON.stringify(args);
     const result = func(...args);
-
-    if (cache[key] && deepEqual(cache[key], result)) return cache[key];
-
-    cache[key] = result;
+    const cachedResult = cache.get(key);
+    if (cache.has(key) && deepEqual(cachedResult, result)) return cachedResult as ReturnType<T>;
+    cache.set(key, result);
     return result;
   } as T;
 }
