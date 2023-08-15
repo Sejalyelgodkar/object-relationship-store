@@ -16,7 +16,7 @@
   "scripts": {
     "test": "jest",
     "index": "nodemon src/index.ts",
-    "build": "rm -r ./build & rm jjmyers-api-store-*.tgz & rollup -c --bundleConfigAsCjs && npm pack"
+    "build": "rm -r ./build & rm jjmyers-object-relationship-*.tgz & rollup -c --bundleConfigAsCjs && npm pack"
   },
   "files": [
     "build/*"
