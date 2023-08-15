@@ -104,38 +104,7 @@ store.upsert([
         "originContainerWidth": "392.7272644042969",
         "originContainerHeight": "360.7272644042969",
         "aspectRatio": 0.789062,
-        "thumbnails": [
-          {
-            "id": 6,
-            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841754.0-1.128.jpeg",
-            "height": 128,
-            "width": 101
-          },
-          {
-            "id": 7,
-            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841754.0-2.256.jpeg",
-            "height": 256,
-            "width": 202
-          },
-          {
-            "id": 8,
-            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841754.0-3.512.jpeg",
-            "height": 512,
-            "width": 405
-          },
-          {
-            "id": 9,
-            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841755.0-4.720.jpeg",
-            "height": 720,
-            "width": 570
-          },
-          {
-            "id": 10,
-            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841754.0-0.original.jpeg",
-            "height": 1500,
-            "width": 1187
-          }
-        ]
+        "thumbnails": null
       }
     ],
     "user": {

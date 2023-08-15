@@ -61,7 +61,7 @@ export function createStore<
   }
 
 
-  
+
   function upsert(object: any, options?: ORS.UpsertOptions<I>) {
 
     const items = Array.isArray(object) ? object : [object];
@@ -146,8 +146,6 @@ export function createStore<
         parentPrimaryKey,
       } = params;
 
-      if(!item) return null;
-
       const name = identify(item);
 
       // @ts-ignore
@@ -207,6 +205,8 @@ export function createStore<
 
             // @ts-ignore
             const hasMany = relationalObject[field] === "hasMany";
+
+            if (!item[field]) return;
 
             if (!hasMany) {
               upsertOne({
@@ -290,7 +290,7 @@ export function createStore<
     }
 
 
-    items.forEach(item => upsertOne({ item }))
+    items.forEach(item => !!item && upsertOne({ item }))
 
 
     // Sort the indexes if any.
