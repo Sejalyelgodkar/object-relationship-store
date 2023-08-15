@@ -181,36 +181,7 @@ export const posts = [
     "user": {
       "id": 2,
       "username": "qwerty",
-      "profileImage": {
-        "id": 48,
-        "baseScale": "1.4",
-        "pinchScale": "1",
-        "translateX": "-3.5714285714285716",
-        "translateY": "28.571428571428573",
-        "originContainerWidth": "252",
-        "originContainerHeight": "252",
-        "aspectRatio": 0.777344,
-        "thumbnails": [
-          {
-            "id": 186,
-            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/2/profilePhoto.256.jpeg?1687444436097",
-            "height": 256,
-            "width": 199
-          },
-          {
-            "id": 187,
-            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/2/profilePhoto.512.jpeg?1687444436097",
-            "height": 512,
-            "width": 398
-          },
-          {
-            "id": 188,
-            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/2/profilePhoto.original.jpeg?1687444436095",
-            "height": 900,
-            "width": 700
-          }
-        ]
-      }
+      "profileImage": null
     }
   },
   {

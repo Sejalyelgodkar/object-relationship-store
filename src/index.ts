@@ -28,44 +28,27 @@ const store = createStore({
   }
 });
 
-// store.upsert([...posts, ...posts], { indexes: [{ index: "homeFeed", key: "1" }] })
+store.upsert([...posts, ...posts], { indexes: [{ index: "homeFeed", key: "1" }] })
 
 // store.upsert({ id: 3, username: "John" })
 
-type User = { id: number; username: string }
-type Image = { id: number; baseScale: number; thumbnails: Thumbnail[] }
-type Thumbnail = { id: number; height: number; widht: number; uri: string; }
+// type User = { id: number; username: string }
+// type Image = { id: number; baseScale: number; thumbnails: Thumbnail[] }
+// type Thumbnail = { id: number; height: number; widht: number; uri: string; }
 
 const result = store.select<"post", any>({
   from: "post",
-  fields: ["id", "images"],
+  fields: "*",
   where: { id: 10 },
   join: [
     {
-      on: "images",
-      fields: ["id", "thumbnails"],
-      join: [
-        { on: "thumbnails", fields: ["height"] }
-      ]
+      on: "user",
+      fields: "*",
     }
   ],
 })
 
-const result2 = store.select<"post", any>({
-  from: "post",
-  fields: ["id", "images"],
-  where: { id: 10 },
-  join: [
-    {
-      on: "images",
-      fields: ["id", "thumbnails"],
-      join: [
-        { on: "thumbnails", fields: ["height"] }
-      ]
-    }
-  ],
-})
-
+console.log(result)
 
 // const selected = store.selectIndex("homeFeed")
 

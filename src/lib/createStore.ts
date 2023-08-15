@@ -146,6 +146,7 @@ export function createStore<
         parentPrimaryKey,
       } = params;
 
+      if(!item) return null;
       const name = identify(item);
 
       // @ts-ignore
