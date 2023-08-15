@@ -1,34 +1,51 @@
 import { posts } from "./data";
 import { createStore, createRelationalObject, createRelationalObjectIndex } from "./lib/index";
 
-const user = createRelationalObject("user", { id: "number" });
-const image = createRelationalObject("image", { id: "number" });
-const thumbnail = createRelationalObject("thumbnail", { id: "number" });
-const post = createRelationalObject("post", { id: "number" });
 
-image.hasMany(thumbnail, "thumbnails")
-user.hasOne(image, "profileImage")
-post.hasMany(image, "images")
+const user = createRelationalObject("user", { id: "number" })
+const image = createRelationalObject("image", { id: "number" })
+const imageThumbnail = createRelationalObject("thumbnail", { id: "number" })
+const post = createRelationalObject("post", { id: "number" })
+const postComment = createRelationalObject("postComment", { id: "number" })
+
+const profilePosts = createRelationalObjectIndex("profilePosts", [post])
+const homeFeed = createRelationalObjectIndex("homeFeed", [post])
+const postComments = createRelationalObjectIndex("postComments", [postComment], (a, b) => a.id > b.id ? -1 : 1)
+
+postComment.hasMany(postComment, "replies")
+postComment.hasOne(postComment, "replyingTo")
+postComment.hasOne(post)
+postComment.hasOne(user)
+
 post.hasOne(user)
-user.hasMany(post, "posts")
-image.hasOne(user)
-image.hasOne(post)
+post.hasMany(image, "images")
 
-const homeFeed = createRelationalObjectIndex("homeFeed", [post, user], (a,b) => -1)
-const users = createRelationalObjectIndex("users", [user])
+user.hasOne(image, "profileImage")
+user.hasOne(image, "bannerImage")
+user.hasOne(image, "layoutImage")
+image.hasMany(imageThumbnail, "thumbnails")
 
 const store = createStore({
-  relationalCreators: [user, post, image, thumbnail],
-  indexes: [homeFeed, users],
+  relationalCreators: [
+    user,
+    image,
+    imageThumbnail,
+    post,
+    postComment,
+  ],
+  indexes: [homeFeed, postComments, profilePosts],
   identifier: {
-    'user': o => "username" in o,
-    'image': o => "baseScale" in o,
-    'thumbnail': o => "uri" in o,
-    'post': o => "caption" in o,
+    user: o => "username" in o,
+    post: o => "caption" in o,
+    image: o => "baseScale" in o,
+    thumbnail: o => "uri" in o,
+    postComment: o => "replyingToId" in o
   }
 });
 
-store.upsert([...posts, ...posts], { indexes: [{ index: "homeFeed", key: "1" }] })
+export type From = "user" | "post" | "image" | "thumbnail" | "postComment"
+
+// store.upsert([...posts, ...posts], { indexes: [{ index: "homeFeed", key: "1" }] })
 
 // store.upsert({ id: 3, username: "John" })
 
@@ -36,19 +53,19 @@ store.upsert([...posts, ...posts], { indexes: [{ index: "homeFeed", key: "1" }] 
 // type Image = { id: number; baseScale: number; thumbnails: Thumbnail[] }
 // type Thumbnail = { id: number; height: number; widht: number; uri: string; }
 
-const result = store.select<"post", any>({
-  from: "post",
-  fields: "*",
-  where: { id: 10 },
-  join: [
-    {
-      on: "user",
-      fields: "*",
-    }
-  ],
-})
+// const result = store.select<"post", any>({
+//   from: "post",
+//   fields: "*",
+//   where: { id: 10 },
+//   join: [
+//     {
+//       on: "user",
+//       fields: "*",
+//     }
+//   ],
+// })
 
-console.log(result)
+// console.log(result)
 
 // const selected = store.selectIndex("homeFeed")
 
@@ -67,3 +84,90 @@ console.log(result)
 //   }
 // })
 
+
+store.upsert([
+  {
+    "id": 2,
+    "caption": "First",
+    "contentRating": "R18",
+    "createdAt": "2023-08-15T06:27:24.000Z",
+    "likeCount": 0,
+    "commentsCount": 0,
+    "isLiked": 0,
+    "images": [
+      {
+        "id": 2,
+        "baseScale": "1",
+        "pinchScale": "1",
+        "translateX": "0",
+        "translateY": "0",
+        "originContainerWidth": "392.7272644042969",
+        "originContainerHeight": "360.7272644042969",
+        "aspectRatio": 0.789062,
+        "thumbnails": [
+          {
+            "id": 6,
+            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841754.0-1.128.jpeg",
+            "height": 128,
+            "width": 101
+          },
+          {
+            "id": 7,
+            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841754.0-2.256.jpeg",
+            "height": 256,
+            "width": 202
+          },
+          {
+            "id": 8,
+            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841754.0-3.512.jpeg",
+            "height": 512,
+            "width": 405
+          },
+          {
+            "id": 9,
+            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841755.0-4.720.jpeg",
+            "height": 720,
+            "width": 570
+          },
+          {
+            "id": 10,
+            "uri": "https://isekaied-photos.us-southeast-1.linodeobjects.com/1/post.1692080841754.0-0.original.jpeg",
+            "height": 1500,
+            "width": 1187
+          }
+        ]
+      }
+    ],
+    "user": {
+      "id": 1,
+      "username": "qwerty",
+      "profileImage": null
+    }
+  }
+], {
+  indexes: [{ index: "homeFeed", key: "home" }]
+})
+
+const result = store.selectIndex("homeFeed-home", {
+  post: {
+    from: "post",
+    // @ts-ignore
+    where: { id: 10 },
+    fields: ["user", "createdAt"],
+    join: [
+      {
+        on: "user",
+        fields: ["username", "profileImage"],
+        join: [
+          {
+            on: "profileImage",
+            fields: "*",
+            join: [{ on: "thumbnails", fields: "*" }]
+          }
+        ]
+      }
+    ]
+  }
+})
+
+console.log(result)

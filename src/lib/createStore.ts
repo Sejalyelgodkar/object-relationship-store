@@ -147,6 +147,7 @@ export function createStore<
       } = params;
 
       if(!item) return null;
+
       const name = identify(item);
 
       // @ts-ignore
@@ -345,7 +346,7 @@ export function createStore<
         const object = querySelect(model, state, { ...queryOptions, where: { [recordIndex.primaryKey]: recordIndex.primaryKeyValue } } as ORS.SelectOptions<any, any>);
         if (!object) return;
         if (!queryOptions?.where) return result.push(object);
-        if (!queryOptions?.where(object)) return;
+        if (typeof queryOptions?.where === "function" && !queryOptions?.where(object)) return;
         result.push(object);
       });
     return result

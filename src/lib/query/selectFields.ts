@@ -27,6 +27,8 @@ export default function selectFields<
 
         const value = object[field];
 
+        if(!value) return;
+
         const relation = schema.__relationship[field as string];
 
         // If this field is not a related field, set it.
