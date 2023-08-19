@@ -7,10 +7,10 @@ function getObjectMemoryUsageInMB(object: any) {
   return sizeInBytes / (1024 * 1024);
 }
 
-const user = createRelationalObject("user", { id: "number" });
-const image = createRelationalObject("image", { id: "number" });
-const thumbnail = createRelationalObject("thumbnail", { id: "number" });
-const post = createRelationalObject("post", { id: "number" });
+const user = createRelationalObject("user");
+const image = createRelationalObject("image");
+const thumbnail = createRelationalObject("thumbnail");
+const post = createRelationalObject("post");
 
 image.hasMany(thumbnail, "thumbnails")
 user.hasOne(image, "profileImage")

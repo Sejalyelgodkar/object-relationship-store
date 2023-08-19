@@ -10,7 +10,7 @@ declare function createStore<N extends string, I extends string, O extends strin
     purge: () => void;
     select: <N_1 extends string, O_1 extends Record<string, any>>(options: ORS.SelectOptions<N_1, O_1>) => O_1 | O_1[] | null;
     selectIndex: <E extends I, N_2 extends string, O_2 extends Record<string, any>>(index: `${E}-${string}`, options?: Record<string, ORS.Replace<ORS.SelectOptions<N_2, O_2>, "where", (object: any) => boolean>> | undefined) => O_2[] | null;
-    upsert: (object: ORS.StoreObject<N>, options?: ORS.UpsertOptions<I>) => void;
+    upsert: (object: ORS.StoreObject<N, I> | ORS.StoreObject<N, I>[]) => void;
     subscribe: (listener: () => void) => () => boolean;
 };
 
@@ -98,15 +98,11 @@ declare namespace ORS {
     join?: JoinOptions<K>[];
   }
 
-  export interface UpsertOptions<I extends string> {
-    indexes: { index: I, key: string }[];
-  }
-
   export type Replace<T, K extends keyof T, U> = Omit<T, K> & { [P in K]?: U };
 
   export type Store<N extends string, I extends string, O extends string> = ReturnType<typeof createStore<N, I, O>>
 
-  export type StoreObject<I> = {
+  export type StoreObject<N, I> = {
 
     /**
      * Your object key values pair
@@ -114,14 +110,14 @@ declare namespace ORS {
     [key: string]: any;
 
     /**
-     * If this object is being inserted into an index and you want to skip it, set this value to true when upserting.
+     * The indexes this object belongs to
      */
-    __skipIndex__?: boolean;
+    __indexes__?: `${I}-${string}`[];
 
     /**
      * If this object cannot be identified by the identifier, set this value.
      */
-    __identify__?: I;
+    __identify__?: N;
 
     /**
      * If you want to remove this object and all references to it in the store,
@@ -173,4 +169,8 @@ declare function createRelationalObject<N extends string>(name: N, primaryKey?: 
  */
 declare function createRelationalObjectIndex<N extends string, I extends string>(name: I, objects: ORS.RelationalCreator<N>[], sort?: (a: any, b: any) => 1 | -1 | 0): ORS.RelationalObjectIndex<I, N>;
 
-export { ORS, createRelationalObject, createRelationalObjectIndex, createStore };
+declare function withOptions<N extends string, I extends string>(object: ORS.StoreObject<N, I>, options: {
+    [K in keyof ORS.StoreObject<N, I>]?: ORS.StoreObject<N, I>[K] | ((object: ORS.StoreObject<N, I>) => ORS.StoreObject<N, I>[K]);
+}): ORS.StoreObject<N, I> | ORS.StoreObject<N, I>[];
+
+export { ORS, createRelationalObject, createRelationalObjectIndex, createStore, withOptions };
