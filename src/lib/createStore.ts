@@ -12,11 +12,12 @@ export function createStore<
     relationalCreators,
     indexes,
     identifier,
+    initialStore,
   } = config;
 
 
   const references: ORS.ReferenceStore = {
-    current: {},
+    current: initialStore?.references ?? {},
     upsert(this, val) {
       if (!this.current[val.name]) this.current[val.name] = {}
       if (!this.current[val.name][val.primaryKey]) {
@@ -28,7 +29,7 @@ export function createStore<
     }
   };
 
-  const state = {} as ORS.State;
+  const state = initialStore?.state ?? {} as ORS.State;
 
 
   const listeners = new Set<() => void>();
@@ -82,7 +83,81 @@ export function createStore<
     const upsertIndexes = (options?.indexes ?? []).map(i => ({ model: model[i.index], key: i.key })) as { model: ORS.RelationalObjectIndex<I, O>, key: string }[];
 
 
-    function destroy(params: {
+    function destroyOrphans(params: {
+      item: any;
+      name: string;
+      primaryKey: string;
+    }) {
+      const {
+        item,
+        name,
+        primaryKey,
+      } = params;
+
+
+      // @ts-ignore
+      const itemSchema: ORS.RelationalObject<N> = model[name];
+
+      /**
+       * For each related field in this object, check if the objects related fields and remove orphan children.
+       */
+      Object
+        .entries(itemSchema.__relationship)
+        .forEach(([field, relationship]) => {
+          const itemPrimaryKey = state[name][item[primaryKey]][field];
+
+          // If there is no primary key, skip
+          if (!itemPrimaryKey) return;
+
+          // This field in the object is a "hasMany", loop over itemPrimaryKey, it is an array of primary keys.
+          if (relationship.__has === "hasMany") {
+
+            itemPrimaryKey
+              .forEach((pk: any) => {
+                const refs = references.current[relationship.__name][pk];
+
+                // For each pk, check if all are self refs
+                const allSelfRef = refs.every(ref => {
+                  const [refName, refPrimaryKey] = ref.split(".")
+                  return refName === name && refPrimaryKey === String(item[primaryKey])
+                })
+
+                if (!allSelfRef) return;
+
+                // If all references are to the item we are deleting, remove all refs and delete the object too
+                delete references.current[relationship.__name][pk];
+                delete state[relationship.__name][pk];
+              });
+
+            return;
+          }
+
+          const refs = references.current[relationship.__name][itemPrimaryKey];
+
+          // If we have references
+          if (refs) {
+
+            // Check if all are self refs
+            const allSelfRef = refs.every(ref => {
+              const [refName, refPrimaryKey] = ref.split(".")
+              return refName === name && refPrimaryKey === String(item[primaryKey])
+            })
+
+            if (!allSelfRef) return;
+
+            // If all references are to the item we are deleting, remove all refs and delete the object too
+            delete references.current[relationship.__name][itemPrimaryKey];
+            delete state[relationship.__name][itemPrimaryKey];
+          }
+        })
+
+      // Lastly, delete the object
+      // We have already destroyed all orphans.
+      delete state[name][item[primaryKey]];
+    }
+
+
+    function destroyReferences(params: {
       item: any;
       name: string;
       primaryKey: string;
@@ -94,33 +169,46 @@ export function createStore<
         primaryKey,
       } = params;
 
-      if (!references.current[name]) return;
+      /**
+       * If there are no references, destroy the object and orphans
+       */
+      if (!references.current[name]) {
+        destroyOrphans({ item, name, primaryKey });
+        return;
+      }
 
       const itemPrimaryKey = item[primaryKey];
       const refs = references.current[name][itemPrimaryKey];
 
-      refs
-        .forEach(ref => {
+      if (refs) {
+        refs
+          .forEach(ref => {
 
-          //  ["user", "10", "images"] = ref.split(".")
-          const [refName, refPrimaryKey, refField] = ref.split(".")
+            //  ["user", "10", "images"] = ref.split(".")
+            const [refName, refPrimaryKey, refField] = ref.split(".")
 
-          // @ts-ignore
-          const refRelation: ORS.RelationalObject<N> = model[refName];
+            // @ts-ignore
+            const refRelation: ORS.RelationalObject<N> = model[refName];
 
-          const hasMany = refRelation.__relationship[refField].__has === "hasMany";
+            const hasMany = refRelation.__relationship[refField].__has === "hasMany";
 
-          // If this field is not a has many, delete it.
-          if (!hasMany) {
-            delete state[refName][refPrimaryKey][refField];
-            return;
-          }
+            // If this field is not a has many, delete it.
+            if (!hasMany) {
+              delete state[refName][refPrimaryKey][refField];
+              return;
+            }
 
-          const index = state[refName][refPrimaryKey][refField].indexOf(itemPrimaryKey);
-          if (index !== - 1) state[refName][refPrimaryKey][refField].splice(index, 1);
-        })
+            const index = state[refName][refPrimaryKey][refField].indexOf(itemPrimaryKey);
+            if (index !== - 1) state[refName][refPrimaryKey][refField].splice(index, 1);
+          })
 
-      delete state[name][item[primaryKey]];
+        delete references.current[name][itemPrimaryKey];
+      }
+
+      /**
+       * If there were references, after removing them, destroy the object and all orphans
+       */
+      destroyOrphans({ item, name, primaryKey });
     }
 
 
@@ -213,8 +301,8 @@ export function createStore<
       // If the primary key does not exist on the object, we can't go forward.
       if (!item[primaryKey]) throw new Error(`Expected object "${name}" to have a primaryKey "${primaryKey}".`);
 
-      // If we are destroying this item and all references, call destroy and return
-      if (item.__destroy__) return destroy({ item, name, primaryKey });
+      // If we are destroying this item and all references, call destroyReferences and return
+      if (item.__destroy__) return destroyReferences({ item, name, primaryKey });
 
       // If this table does not exist, initialize it.
       if (!state[name]) state[name] = {};
@@ -388,7 +476,6 @@ export function createStore<
 
 
   /**
-   * TODO update the ts here
    * @param index The name of the index you want to select from
    * @param options The key is the name of the object, value is SelectOptions
    */
@@ -426,8 +513,32 @@ export function createStore<
     for (const key in state) {
       if (!Object.prototype.hasOwnProperty.call(state, key)) return;
       delete state[key];
-    }
+    };
+    references.current = {};
   }
 
-  return { getState, getReferences, purge, select, selectIndex, upsert, subscribe }
+
+  function save(callback: (store: ORS.RestoreStore) => void) {
+    callback({ state, references: references.current })
+  }
+
+
+  function restore(store: ORS.RestoreStore) {
+    references.current = store.references;
+    Object
+      .entries(store.state)
+      .map(([key, value]) => state[key] = value)
+  }
+
+  return {
+    save,
+    restore,
+    getState,
+    getReferences,
+    purge,
+    select,
+    selectIndex,
+    upsert,
+    subscribe
+  }
 }

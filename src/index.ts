@@ -202,11 +202,11 @@ store.upsert([
   { id: 2, __identify__: "user", profileImage: _profileImage, images: [_profileImage, otherImage] }
 ])
 
-store.upsert({
-  id: 90,
-  __identify__: "image",
-  __destroy__: true
-})
+// store.upsert({
+//   id: 1,
+//   __identify__: "user",
+//   __destroy__: true
+// })
 
 // const selected = store.selectIndex(
 //   "homeFeed-home",
@@ -218,5 +218,16 @@ store.upsert({
 //   }
 // )
 
-console.log(store.getState())
+let savedStore: any;
+
+store.save(s => savedStore = JSON.stringify(s))
+store.purge();
+
+console.log("before", store.getState())
+
+store.restore(JSON.parse(savedStore));
+
+console.log("after", store.getState())
+
+
 // console.log(store.getReferences())

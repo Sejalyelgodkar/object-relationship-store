@@ -56,6 +56,8 @@ export namespace ORS {
      * 
      */
     identifier: { [K in N]: IdentifierFunction<any>; }
+
+    initialStore?: ORS.RestoreStore
   }
 
   export interface State {
@@ -113,6 +115,8 @@ export namespace ORS {
     /**
      * If you want to remove this object and all references to it in the store,
      * set this value to true when upserting
+     * 
+     * The object, all references and all other objects that referenced only this object (orphaned children) will be destroyed.
      */
     __destroy__?: boolean;
   }
@@ -136,4 +140,9 @@ export namespace ORS {
     ) => void
   }
 
+
+  export interface RestoreStore {
+    state: ORS.State;
+    references: ORS.ReferenceStore["current"];
+  }
 }
