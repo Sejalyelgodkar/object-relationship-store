@@ -38,7 +38,7 @@ export default function select<
     // Result will be all objects.
     result = Object
       .values(table)
-      .map(object => selectFields<string, O>(fields, schema, object))
+      .map(object => selectFields<string, O>(fields, object))
 
   }
 
@@ -51,7 +51,7 @@ export default function select<
 
     // If the primary key exists, return the related object.
     if (primaryKey) {
-      result = selectFields(fields, schema, table[primaryKey]);
+      result = selectFields(fields, table[primaryKey]);
     }
 
 
@@ -66,7 +66,7 @@ export default function select<
       // If a match is found, select the fields and break the loop.
       for (const [_, object] of Object.entries(table)) {
         const match = findMatch(where, object)
-        if (match) result.push(selectFields(fields, schema, object));
+        if (match) result.push(selectFields(fields, object));
       }
 
     }
@@ -85,7 +85,7 @@ export default function select<
     // If a match is found, select the fields and break the loop.
     for (const [_, object] of Object.entries(table)) {
       const match = where(object)
-      if (match) result.push(selectFields(fields, schema, object));
+      if (match) result.push(selectFields(fields, object));
     }
   }
 
@@ -151,7 +151,12 @@ function joinFields<
   // @ts-ignore
   const schema = model[from] as RelationalObject<N>;
 
-  join
+
+  Object
+    .values(
+      join
+        .reduce((r, c) => { r[c.on as string] = c; return r }, {} as { [k: string]: ORS.JoinOptions<keyof O> })
+    )
     .forEach(({ on, fields, join: innerJoin }) => {
 
       if (!result[on]) return;
@@ -159,7 +164,6 @@ function joinFields<
       if (!schema.__relationship[on]) throw new Error(`Field "${String(on)}" does not exist in object "${from}"`);
 
       if (schema.__relationship[on].__has === "hasOne") {
-
         // Create the selector from the join statement.
         result[on] = select(model, state, {
           fields,
@@ -185,7 +189,7 @@ function joinFields<
             if (match) matches.push(match);
           })
 
-        result[on] = matches  as any;
+        result[on] = matches as any;
       }
 
       if (innerJoin) {

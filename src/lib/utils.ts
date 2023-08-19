@@ -1,3 +1,13 @@
+export function deepCopy<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") return obj;
+
+  let newObj: any = Array.isArray(obj) ? [] : {};
+
+  for (let key in obj) if (obj.hasOwnProperty(key)) newObj[key] = deepCopy(obj[key]);
+
+  return newObj;
+}
+
 export function deepEqual(obj1: any, obj2: any) {
   if (obj1 === obj2) return true;
 

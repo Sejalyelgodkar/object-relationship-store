@@ -20,6 +20,10 @@ postComment.hasOne(user)
 post.hasOne(user)
 post.hasMany(image, "images")
 
+user.hasMany(image, "images")
+image.hasMany(user, "users")
+
+user.hasMany(post, "posts")
 user.hasOne(image, "profileImage")
 user.hasOne(image, "bannerImage")
 user.hasOne(image, "layoutImage")
@@ -45,15 +49,16 @@ const store = createStore({
 
 export type From = "user" | "post" | "image" | "thumbnail" | "postComment"
 
-store.upsert(posts)
+// store.upsert([...posts, ...posts])
 
-console.log(store.getState())
 
 // store.upsert({ id: 3, username: "John" })
 
 // type User = { id: number; username: string }
 // type Image = { id: number; baseScale: number; thumbnails: Thumbnail[] }
 // type Thumbnail = { id: number; height: number; widht: number; uri: string; }
+
+// store.upsert({ id: 2, username: "John" })
 
 // const result = store.select<"post", any>({
 //   from: "post",
@@ -63,13 +68,13 @@ console.log(store.getState())
 //     {
 //       on: "user",
 //       fields: "*",
+//       join: [
+//         {on: "profileImage", fields: "*"}
+//       ]
 //     }
 //   ],
 // })
 
-// console.log(result)
-
-// const selected = store.selectIndex("homeFeed")
 
 // console.log(selected)
 
@@ -146,3 +151,72 @@ console.log(store.getState())
 // // @ts-ignore
 // delete users[1]
 // // delete users[1];
+
+// const result = store.select<"post", any>({
+//   from: "post",
+//   fields: "*",
+//   where: o => o.images.includes(54),
+//   join: [
+//     {
+//       on: "user",
+//       fields: "*",
+//       join: [
+//         {on: "profileImage", fields: "*"}
+//       ]
+//     }
+//   ],
+// })
+
+
+// store.upsert(posts, { indexes: [{ index: "homeFeed", key: "home" }] })
+
+// store.upsert({
+//   id: 10,
+//   __identify__: "post",
+//   __destroy__: true
+// })
+
+
+// const selected = store.selectIndex(
+//   "homeFeed-home",
+//   {
+//     post: {
+//       from: "post",
+//       fields: ["id"],
+//     }
+//   }
+// )
+
+const otherImage = {
+  id: 91,
+  __identify__: "image"
+}
+
+const _profileImage = {
+  id: 90,
+  __identify__: "image"
+}
+
+store.upsert([
+  { id: 1, __identify__: "user", profileImage: _profileImage },
+  { id: 2, __identify__: "user", profileImage: _profileImage, images: [_profileImage, otherImage] }
+])
+
+store.upsert({
+  id: 90,
+  __identify__: "image",
+  __destroy__: true
+})
+
+// const selected = store.selectIndex(
+//   "homeFeed-home",
+//   {
+//     post: {
+//       from: "post",
+//       fields: ["id"],
+//     }
+//   }
+// )
+
+console.log(store.getState())
+// console.log(store.getReferences())

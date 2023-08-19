@@ -30,51 +30,6 @@ const store = createStore({
 store.upsert(posts)
 
 
-test('1. Related fields should also change', () => {
-
-
-  const v1 = store.getState().user[2].profileImage.thumbnails[0].uri;
-  const v2 = store.getState().thumbnail[186].uri;
-
-  expect(v1).toBe("https://image.com/2/profilePhoto.256.jpeg?1687444436097")
-  expect(v2).toBe("https://image.com/2/profilePhoto.256.jpeg?1687444436097")
-
-  store.getState().user[2].profileImage.thumbnails[0].uri = "Hello"
-
-  const v3 = store.getState().user[2].profileImage.thumbnails[0].uri;
-  const v4 = store.getState().thumbnail[186].uri;
-
-  expect(v3).toBe("Hello")
-  expect(v4).toBe("Hello")
-})
-
-
-test('2. Related fields should also change', () => {
-
-  const v1 = store.getState().user[2].username;
-  const v2 = store.getState().post[10].user.username;
-
-  expect(v1).toBe("qwerty")
-  expect(v2).toBe("qwerty")
-
-  store.getState().user[2].username = "--updated"
-
-  const v3 = store.getState().user[2].username;
-  const v4 = store.getState().post[10].user.username;
-
-  expect(v3).toBe("--updated")
-  expect(v4).toBe("--updated")
-
-  store.getState().post[9].user.username = "--updated-once-again"
-
-  const v5 = store.getState().user[2].username;
-  const v6 = store.getState().post[10].user.username;
-
-  expect(v5).toBe("--updated-once-again")
-  expect(v6).toBe("--updated-once-again")
-})
-
-
 test("Memory should not increase when the same object is passed twice", () => {
 
   store.upsert(posts)

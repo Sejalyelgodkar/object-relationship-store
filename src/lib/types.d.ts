@@ -93,4 +93,47 @@ export namespace ORS {
 
   export type Store<N extends string, I extends string, O extends string> = ReturnType<typeof createStore<N, I, O>>
 
+  export type StoreObject<I> = {
+
+    /**
+     * Your object key values pair
+     */
+    [key: string]: any;
+
+    /**
+     * If this object is being inserted into an index and you want to skip it, set this value to true when upserting.
+     */
+    __skipIndex__?: boolean;
+
+    /**
+     * If this object cannot be identified by the identifier, set this value.
+     */
+    __identify__?: I;
+
+    /**
+     * If you want to remove this object and all references to it in the store,
+     * set this value to true when upserting
+     */
+    __destroy__?: boolean;
+  }
+
+
+  type Ref = `${string}.${string}.${string}`;
+
+  export interface ReferenceStore {
+    current: {
+      [key: string]: {
+        [primaryKey: string]: Ref[]
+      }
+    },
+    upsert: (
+      this: ReferenceStore,
+      val: {
+        name: string;
+        primaryKey: string | number;
+        ref: Ref
+      }
+    ) => void
+  }
+
 }

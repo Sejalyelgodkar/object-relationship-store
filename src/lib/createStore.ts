@@ -1,6 +1,6 @@
 import { type ORS } from "./types";
 import querySelect from "./query/select";
-import { memo } from "./utils";
+import { deepCopy, memo } from "./utils";
 
 export function createStore<
   N extends string,
@@ -14,6 +14,19 @@ export function createStore<
     identifier,
   } = config;
 
+
+  const references: ORS.ReferenceStore = {
+    current: {},
+    upsert(this, val) {
+      if (!this.current[val.name]) this.current[val.name] = {}
+      if (!this.current[val.name][val.primaryKey]) {
+        this.current[val.name][val.primaryKey] = [val.ref];
+        return;
+      }
+      if (this.current[val.name][val.primaryKey].includes(val.ref)) return;
+      this.current[val.name][val.primaryKey].push(val.ref)
+    }
+  };
 
   const state = {} as ORS.State;
 
@@ -49,7 +62,7 @@ export function createStore<
   function identify(item: any): string {
     if (item.__identify__) {
       const name = item.__identify__;
-      delete item.__identify__
+      delete item.__identify__;
       return name;
     }
     for (const key in identifier) {
@@ -61,13 +74,55 @@ export function createStore<
   }
 
 
+  function upsert(object: ORS.StoreObject<N>, options?: ORS.UpsertOptions<I>) {
 
-  function upsert(object: any, options?: ORS.UpsertOptions<I>) {
-
-    const items = Array.isArray(object) ? object : [object];
+    const items = deepCopy(Array.isArray(object) ? object : [object]);
 
     // @ts-ignore
     const upsertIndexes = (options?.indexes ?? []).map(i => ({ model: model[i.index], key: i.key })) as { model: ORS.RelationalObjectIndex<I, O>, key: string }[];
+
+
+    function destroy(params: {
+      item: any;
+      name: string;
+      primaryKey: string;
+    }) {
+
+      const {
+        item,
+        name,
+        primaryKey,
+      } = params;
+
+      if (!references.current[name]) return;
+
+      const itemPrimaryKey = item[primaryKey];
+      const refs = references.current[name][itemPrimaryKey];
+
+      refs
+        .forEach(ref => {
+
+          //  ["user", "10", "images"] = ref.split(".")
+          const [refName, refPrimaryKey, refField] = ref.split(".")
+
+          // @ts-ignore
+          const refRelation: ORS.RelationalObject<N> = model[refName];
+
+          const hasMany = refRelation.__relationship[refField].__has === "hasMany";
+
+          // If this field is not a has many, delete it.
+          if (!hasMany) {
+            delete state[refName][refPrimaryKey][refField];
+            return;
+          }
+
+          const index = state[refName][refPrimaryKey][refField].indexOf(itemPrimaryKey);
+          if (index !== - 1) state[refName][refPrimaryKey][refField].splice(index, 1);
+        })
+
+      delete state[name][item[primaryKey]];
+    }
+
 
     /**
      *  If this object is related with the parent, then set the relationship
@@ -101,26 +156,27 @@ export function createStore<
       if (relationWithParent) {
 
         if (relationWithParent.__has === "hasOne") {
-          state[name][item[primaryKey]][relationWithParent.__alias] = state[parentName][parentPrimaryKey];
+          state[name][item[primaryKey]][relationWithParent.__alias] = parentPrimaryKey;
         }
 
         if (relationWithParent.__has === "hasMany") {
           const existingItems = state[name][item[primaryKey]][relationWithParent.__alias];
-          const currentItem = state[parentName][parentPrimaryKey];
           const isAnArray = Array.isArray(existingItems);
+
+          // references.upsert({ name, primaryKey: item[primaryKey], ref: `${parentName}.${parentPrimaryKey}.${parentField}` });
+
 
           // If the existing items is not an array, it's new, assign it to a
           // new array containg the current item.
           if (!isAnArray) {
-            state[name][item[primaryKey]][relationWithParent.__alias] = [currentItem];
+            state[name][item[primaryKey]][relationWithParent.__alias] = [parentPrimaryKey];
+            return;
           }
 
           // The existing items is an array
           // Check if the current item exists. If it does not, add it.
-          if (isAnArray) {
-            const exists = !!existingItems.find((i: any) => i[primaryKey] === currentItem[primaryKey]);
-            if (!exists) existingItems.push(currentItem)
-          }
+          const exists = !!existingItems.find((id: any) => id === parentPrimaryKey);
+          if (!exists) existingItems.push(parentPrimaryKey)
         }
       }
 
@@ -149,7 +205,7 @@ export function createStore<
       const name = identify(item);
 
       // @ts-ignore
-      const relationalObject: RelationalObject<N> = model[name];
+      const relationalObject: ORS.RelationalObject<N> = model[name];
 
       const primaryKey = relationalObject.__primaryKey;
 
@@ -157,6 +213,8 @@ export function createStore<
       // If the primary key does not exist on the object, we can't go forward.
       if (!item[primaryKey]) throw new Error(`Expected object "${name}" to have a primaryKey "${primaryKey}".`);
 
+      // If we are destroying this item and all references, call destroy and return
+      if (item.__destroy__) return destroy({ item, name, primaryKey });
 
       // If this table does not exist, initialize it.
       if (!state[name]) state[name] = {};
@@ -196,14 +254,16 @@ export function createStore<
       }
 
 
+      /**
+       * Traverse inside the object and add all related fields to state.
+       */
       Object
         .entries(item)
-        .forEach(([field, value]) => {
+        .forEach(([field, value]: any) => {
 
           // If this field is a related field, traverse in recursively
           if (!!relationalObject.__relationship[field]) {
 
-            // @ts-ignore
             const hasMany = relationalObject[field] === "hasMany";
 
             if (!item[field]) return;
@@ -231,21 +291,22 @@ export function createStore<
           }
 
           state[name][item[primaryKey]][field] = value;
-
         })
 
 
-      // If this is a child of someone
+      /**
+       * If this object is a child of someone, create a reference by primaryKey in the parent
+       */
       if (parentName && parentField && parentPrimaryKey) {
 
         if (parentFieldHasMany) {
           const existingItems = state[parentName][parentPrimaryKey][parentField];
-          const currentItem = state[name][item[primaryKey]];
 
           // If the existing items is not an array, it's new, assign it to a
           // new array containg the current item.
           if (!Array.isArray(existingItems)) {
-            state[parentName][parentPrimaryKey][parentField] = [currentItem];
+            references.upsert({ name, primaryKey: item[primaryKey], ref: `${parentName}.${parentPrimaryKey}.${parentField}` });
+            state[parentName][parentPrimaryKey][parentField] = [item[primaryKey]];
             handleChildRelationshipWithParent({
               name,
               item,
@@ -259,9 +320,10 @@ export function createStore<
 
           // The existing items is an array
           // Check if the current item exists. If it does not, add it.
-          const exists = !!existingItems.find((i: any) => i[primaryKey] === currentItem[primaryKey]);
+          const exists = !!existingItems.find((id: any) => id === item[primaryKey]);
           if (!exists) {
-            existingItems.push(currentItem)
+            references.upsert({ name, primaryKey: item[primaryKey], ref: `${parentName}.${parentPrimaryKey}.${parentField}` });
+            existingItems.push(item[primaryKey])
             handleChildRelationshipWithParent({
               name,
               item,
@@ -274,6 +336,13 @@ export function createStore<
           return;
         }
 
+
+        references.upsert({ name, primaryKey: item[primaryKey], ref: `${parentName}.${parentPrimaryKey}.${parentField}` });
+
+        // The child has been created
+        // set the parent field to the reference of this object
+        state[parentName][parentPrimaryKey][parentField] = item[primaryKey];
+
         handleChildRelationshipWithParent({
           name,
           item,
@@ -282,11 +351,8 @@ export function createStore<
           primaryKey,
           relationalObject
         })
-
-        // The child has been created
-        // set the parent field to the reference of this object
-        state[parentName][parentPrimaryKey][parentField] = state[name][item[primaryKey]];
       }
+
     }
 
 
@@ -307,7 +373,6 @@ export function createStore<
             return sort(state[itemA.name][itemA.primaryKeyValue], state[itemB.name][itemB.primaryKeyValue])
           })
       })
-
 
 
     listeners.forEach(listener => listener());
@@ -355,6 +420,7 @@ export function createStore<
 
   function getState() { return state; }
 
+  function getReferences() { return references.current; }
 
   function purge() {
     for (const key in state) {
@@ -363,6 +429,5 @@ export function createStore<
     }
   }
 
-
-  return { getState, purge, select, selectIndex, upsert, subscribe }
+  return { getState, getReferences, purge, select, selectIndex, upsert, subscribe }
 }
