@@ -41,6 +41,7 @@ export function createStore<
       return { ...r, [next.__name]: next }
     }, {} as ORS.Model<N>)
 
+
   // @ts-ignore
   indexes?.forEach(index => model[index.__name] = index)
 
@@ -172,6 +173,19 @@ export function createStore<
       // Lastly, delete the object
       // We have already destroyed all orphans.
       delete state[name][item[primaryKey]];
+
+      // Delete the item from any index it is referenced in.
+      itemSchema
+        .__indexes
+        .forEach(indexName => {
+          const index = (state[indexName] as ORS.Index);
+          const key = `${name}-${item[primaryKey]}`;
+          const i = index.index.indexOf(key);
+          if (i !== -1) {
+            delete index.objects[`${name}-${item[primaryKey]}`];
+            index.index.splice(i, 1);
+          }
+        })
     }
 
 
@@ -358,6 +372,9 @@ export function createStore<
             if (!model.__objects.includes(name as O)) return;
 
             const indexKey = `${model.__name}-${key}`
+
+            // If the model's index does not include this, add it.
+            if (!relationalObject.__indexes.includes(indexKey)) relationalObject.__indexes.push(indexKey)
 
             // If it's not defined in state, initialize it.
             if (!state[indexKey]) (state[indexKey] as ORS.Index) = { index: [], objects: {} };

@@ -23,7 +23,7 @@ post.hasMany(image, "images")
 user.hasMany(image, "images")
 image.hasMany(user, "users")
 
-// user.hasMany(post, "posts")
+user.hasMany(post, "posts")
 user.hasOne(image, "profileImage")
 user.hasOne(image, "bannerImage")
 user.hasOne(image, "layoutImage")
@@ -49,7 +49,7 @@ const store = createStore({
 
 export type From = "user" | "post" | "image" | "thumbnail" | "postComment"
 
-store.upsert([...posts, ...posts])
+store.upsert(posts, { indexes: [{ index: "homeFeed", key: "home" }] })
 
 
 // store.upsert({ id: 3, username: "John" })
@@ -60,38 +60,39 @@ store.upsert([...posts, ...posts])
 
 // store.upsert({ id: 2, username: "John" })
 
-store.upsert([
-  // {
-  //   id: 6,
-  //   __identify__: "post",
-  //   __destroy__: true,
-  // },
-  // {
-  //   id: 9,
-  //   __identify__: "post",
-  //   __destroy__: true,
-  // },
-  // {
-  //   id: 10,
-  //   __identify__: "post",
-  //   __destroy__: true,
-  // },
-  // {
-  //   id: 2,
-  //   __identify__: "post",
-  //   __destroy__: true,
-  // },
-  // {
-  //   id: 48,
-  //   __identify__: "image",
-  //   __destroy__: true,
-  // },
-  {
-    id: 2,
-    __identify__: "user",
-    __destroy__: true,
-  },
-])
+// store.upsert([
+//   // {
+//   //   id: 6,
+//   //   __identify__: "post",
+//   //   __destroy__: true,
+//   // },
+//   // {
+//   //   id: 9,
+//   //   __identify__: "post",
+//   //   __destroy__: true,
+//   // },
+//   // {
+//   //   id: 10,
+//   //   __identify__: "post",
+//   //   __destroy__: true,
+//   // },
+//   // {
+//   //   id: 2,
+//   //   __identify__: "post",
+//   //   __destroy__: true,
+//   // },
+//   // {
+//   //   id: 48,
+//   //   __identify__: "image",
+//   //   __destroy__: true,
+//   // },
+//   {
+//     id: 2,
+//     __identify__: "user",
+//     __destroy__: true,
+//   },
+// ])
+
 // const result = store.select({
 //   from: "image",
 //   fields: "*",
@@ -107,7 +108,6 @@ store.upsert([
 //   ],
 // })
 
-console.log(store.getState().post[10])
 
 // console.log(selected)
 
@@ -221,12 +221,20 @@ console.log(store.getState().post[10])
 // )
 
 
-// const selected = store.selectIndex(
-//   "homeFeed-home",
-//   {
-//     post: {
-//       from: "post",
-//       fields: ["id"],
-//     }
-//   }
-// )
+store.upsert({
+  id: 10,
+  __destroy__: true,
+  __identify__: "post"
+})
+
+const selected = store.selectIndex(
+  "homeFeed-home",
+  {
+    post: {
+      from: "post",
+      fields: ["id"],
+    }
+  }
+)
+
+console.log(selected)

@@ -7,9 +7,11 @@ export namespace ORS {
   }
 
   export interface RelationalObject<N extends string = string> {
+    [field: string]: Has<N>;
     __name: N;
     __primaryKey: string;
     __relationship: Record<string, Has<N>>;
+    __indexes: string[];
   }
 
   export interface RelationalCreator<N extends string = string> extends RelationalObject<N> {

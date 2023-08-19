@@ -31,6 +31,7 @@ N extends string
     __name: name,
     __primaryKey: primaryKey ?? "id",
     __relationship: { },
+    __indexes: [],
   }
 
   Object.setPrototypeOf(object, {
