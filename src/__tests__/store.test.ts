@@ -21,7 +21,7 @@ const store = createStore({
   relationalCreators: [user, post, image, thumbnail],
   identifier: {
     'user': o => !!o.username,
-    'image': o => !!o.baseScale,
+    'image': o => !!o.aspectRatio,
     'thumbnail': o => !!o.uri,
     'post': o => !!o.caption,
   }
@@ -33,16 +33,16 @@ store.upsert(posts)
 test('1. Related fields should also change', () => {
 
 
-  const v1 = store.getState().user[2].profileImage.thumbnails[0].height;
-  const v2 = store.getState().thumbnail[186].height;
+  const v1 = store.getState().user[2].profileImage.thumbnails[0].uri;
+  const v2 = store.getState().thumbnail[186].uri;
 
-  expect(v1).toBe(256)
-  expect(v2).toBe(256)
+  expect(v1).toBe("https://image.com/2/profilePhoto.256.jpeg?1687444436097")
+  expect(v2).toBe("https://image.com/2/profilePhoto.256.jpeg?1687444436097")
 
-  store.getState().user[2].profileImage.thumbnails[0].height = "Hello"
+  store.getState().user[2].profileImage.thumbnails[0].uri = "Hello"
 
-  const v3 = store.getState().user[2].profileImage.thumbnails[0].height;
-  const v4 = store.getState().thumbnail[186].height;
+  const v3 = store.getState().user[2].profileImage.thumbnails[0].uri;
+  const v4 = store.getState().thumbnail[186].uri;
 
   expect(v3).toBe("Hello")
   expect(v4).toBe("Hello")
@@ -94,7 +94,7 @@ test("Memory should not increase when we add more relationships", () => {
     relationalCreators: [user, post, image, thumbnail],
     identifier: {
       'user': o => !!o.username,
-      'image': o => !!o.baseScale,
+      'image': o => !!o.aspectRatio,
       'thumbnail': o => !!o.uri,
       'post': o => !!o.caption,
     }
@@ -111,7 +111,7 @@ test("Memory should not increase when we add more relationships", () => {
     relationalCreators: [user, post, image, thumbnail],
     identifier: {
       'user': o => !!o.username,
-      'image': o => !!o.baseScale,
+      'image': o => !!o.aspectRatio,
       'thumbnail': o => !!o.uri,
       'post': o => !!o.caption,
     }

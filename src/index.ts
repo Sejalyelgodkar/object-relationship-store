@@ -37,7 +37,7 @@ const store = createStore({
   identifier: {
     user: o => "username" in o,
     post: o => "caption" in o,
-    image: o => "baseScale" in o,
+    image: o => "aspectRatio" in o,
     thumbnail: o => "uri" in o,
     postComment: o => "replyingToId" in o
   }
@@ -45,7 +45,9 @@ const store = createStore({
 
 export type From = "user" | "post" | "image" | "thumbnail" | "postComment"
 
-// store.upsert([...posts, ...posts], { indexes: [{ index: "homeFeed", key: "1" }] })
+store.upsert(posts)
+
+console.log(store.getState())
 
 // store.upsert({ id: 3, username: "John" })
 
@@ -85,58 +87,62 @@ export type From = "user" | "post" | "image" | "thumbnail" | "postComment"
 // })
 
 
-store.upsert([
-  {
-    "id": 2,
-    "caption": "First",
-    "contentRating": "R18",
-    "createdAt": "2023-08-15T06:27:24.000Z",
-    "likeCount": 0,
-    "commentsCount": 0,
-    "isLiked": 0,
-    "images": [
-      {
-        "id": 2,
-        "baseScale": "1",
-        "pinchScale": "1",
-        "translateX": "0",
-        "translateY": "0",
-        "originContainerWidth": "392.7272644042969",
-        "originContainerHeight": "360.7272644042969",
-        "aspectRatio": 0.789062,
-        "thumbnails": null
-      }
-    ],
-    "user": {
-      "id": 1,
-      "username": "qwerty",
-      "profileImage": null
-    }
-  }
-], {
-  indexes: [{ index: "homeFeed", key: "home" }]
-})
+// store.upsert([
+//   {
+//     "id": 2,
+//     "caption": "First",
+//     "images": [
+//       {
+//         "id": 2,
+//         "aspectRatio": 0.789062,
+//         "thumbnails": null
+//       }
+//     ],
+//     "user": {
+//       "id": 1,
+//       "username": "qwerty",
+//       "profileImage": null
+//     }
+//   }
+// ], {
+//   indexes: [{ index: "homeFeed", key: "home" }]
+// })
 
-const result = store.selectIndex("homeFeed-home", {
-  post: {
-    from: "post",
-    // @ts-ignore
-    where: { id: 10 },
-    fields: ["user", "createdAt"],
-    join: [
-      {
-        on: "user",
-        fields: ["username", "profileImage"],
-        join: [
-          {
-            on: "profileImage",
-            fields: "*",
-            join: [{ on: "thumbnails", fields: "*" }]
-          }
-        ]
-      }
-    ]
-  }
-})
+// const result = store.selectIndex("homeFeed-home", {
+//   post: {
+//     from: "post",
+//     // @ts-ignore
+//     where: { id: 10 },
+//     fields: ["user", "createdAt"],
+//     join: [
+//       {
+//         on: "user",
+//         fields: ["username", "profileImage"],
+//         join: [
+//           {
+//             on: "profileImage",
+//             fields: "*",
+//             join: [{ on: "thumbnails", fields: "*" }]
+//           }
+//         ]
+//       }
+//     ]
+//   }
+// })
 
-console.log(result)
+// const users: {[key: number]: any} = {
+//   1: {
+//     id: 1,
+//     username: "Tom"
+//   }
+// }
+
+// const other = {
+//   user: null
+// }
+
+// other.user = users[1]
+
+// // @ts-ignore
+// delete users[1]
+// // delete users[1];
