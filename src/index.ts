@@ -247,4 +247,5 @@ const selected = store.selectIndex(
 // })
 
 // console.log(store.getState().post)
-console.log(selected)
+// console.log(store.destroy("homeFeed-home"))
+// console.log(store.getState())

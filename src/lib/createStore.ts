@@ -583,6 +583,9 @@ export function createStore<
     references.current = {};
   }
 
+  function destroy(name: N | `${I}-${string}`) {
+    delete state[name];
+  }
 
   function save(callback: (store: ORS.RestoreStore) => void) {
     callback({ state, references: references.current })
@@ -605,6 +608,7 @@ export function createStore<
     select,
     selectIndex,
     upsert,
-    subscribe
+    subscribe,
+    destroy
   }
 }
