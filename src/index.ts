@@ -1,4 +1,5 @@
 import { posts } from "./data";
+import withOptions from "./lib/helper/withOptions";
 import { createStore, createRelationalObject, createRelationalObjectIndex } from "./lib/index";
 
 
@@ -48,8 +49,6 @@ const store = createStore({
 });
 
 export type From = "user" | "post" | "image" | "thumbnail" | "postComment"
-
-store.upsert(posts, { indexes: [{ index: "homeFeed", key: "home" }] })
 
 
 // store.upsert({ id: 3, username: "John" })
@@ -220,12 +219,15 @@ store.upsert(posts, { indexes: [{ index: "homeFeed", key: "home" }] })
 //   }
 // )
 
+store.upsert(withOptions([...posts, ...posts], {
+  __indexes__: ["homeFeed-home"]
+}))
 
-store.upsert({
-  id: 10,
-  __destroy__: true,
-  __identify__: "post"
-})
+// store.upsert({
+//   id: 10,
+//   __destroy__: true,
+//   __identify__: "post"
+// })
 
 const selected = store.selectIndex(
   "homeFeed-home",
@@ -237,4 +239,12 @@ const selected = store.selectIndex(
   }
 )
 
+
+// const result = store.select({
+//   from: "post",
+//   fields: ["id"],
+//   where: [{id: 9},{id: 10}],
+// })
+
+// console.log(store.getState().post)
 console.log(selected)

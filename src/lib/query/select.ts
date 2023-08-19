@@ -20,7 +20,7 @@ export default function select<
   } = selectOptions;
 
   // If where is an array, loop over it and select.
-  if (Array.isArray(where)) return where.flatMap(w => select(model, state, { ...selectOptions, where: w }))
+  if (Array.isArray(where)) return where.flatMap(w => select(model, state, { ...selectOptions, where: w }) ?? [])
 
 
   let result: O | O[] | null = null;
@@ -38,7 +38,7 @@ export default function select<
     // Result will be all objects.
     result = Object
       .values(table)
-      .map(object => selectFields<string, O>(fields, object))
+      .flatMap(object => selectFields<string, O>(fields, object) ?? [])
 
   }
 
@@ -51,7 +51,8 @@ export default function select<
 
     // If the primary key exists, return the related object.
     if (primaryKey) {
-      result = selectFields(fields, table[primaryKey]);
+      const selected = selectFields(fields, table[primaryKey]);
+      if (selected) result = selected;
     }
 
 
@@ -66,7 +67,10 @@ export default function select<
       // If a match is found, select the fields and break the loop.
       for (const [_, object] of Object.entries(table)) {
         const match = findMatch(where, object)
-        if (match) result.push(selectFields(fields, object));
+        if (match) {
+          const selected = selectFields(fields, object);
+          if (selected) result.push(selected);
+        }
       }
 
     }
@@ -85,7 +89,10 @@ export default function select<
     // If a match is found, select the fields and break the loop.
     for (const [_, object] of Object.entries(table)) {
       const match = where(object)
-      if (match) result.push(selectFields(fields, object));
+      if (match) {
+        const selected = selectFields(fields, object);
+        if (selected) result.push(selected);
+      }
     }
   }
 

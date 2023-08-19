@@ -84,15 +84,11 @@ export namespace ORS {
     join?: JoinOptions<K>[];
   }
 
-  export interface UpsertOptions<I extends string> {
-    indexes: { index: I, key: string }[];
-  }
-
   export type Replace<T, K extends keyof T, U> = Omit<T, K> & { [P in K]?: U };
 
   export type Store<N extends string, I extends string, O extends string> = ReturnType<typeof createStore<N, I, O>>
 
-  export type StoreObject<I> = {
+  export type StoreObject<N, I> = {
 
     /**
      * Your object key values pair
@@ -100,14 +96,14 @@ export namespace ORS {
     [key: string]: any;
 
     /**
-     * If this object is being inserted into an index and you want to skip it, set this value to true when upserting.
+     * The indexes this object belongs to
      */
-    __skipIndex__?: boolean;
+    __indexes__?: `${I}-${string}`[];
 
     /**
      * If this object cannot be identified by the identifier, set this value.
      */
-    __identify__?: I;
+    __identify__?: N;
 
     /**
      * If you want to remove this object and all references to it in the store,

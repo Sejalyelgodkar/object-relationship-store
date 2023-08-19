@@ -60,11 +60,12 @@ export function createStore<
    * @returns The name of the object
    */
   function identify(item: any): string {
-    if (item.__identify__) {
+    if ("__identify__" in item) {
       const name = item.__identify__;
       delete item.__identify__;
       return name;
     }
+    delete item.__identify__;
     for (const key in identifier) {
       if (!Object.prototype.hasOwnProperty.call(identifier, key)) continue;
       const validator = identifier[key];
@@ -74,16 +75,26 @@ export function createStore<
   }
 
 
-  function upsert(object: ORS.StoreObject<N>, options?: ORS.UpsertOptions<I>) {
+  function upsert(object: ORS.StoreObject<N, I> | ORS.StoreObject<N, I>[]) {
 
     const items = deepCopy(Array.isArray(object) ? object : [object]);
 
-    // @ts-ignore
-    const upsertIndexes = (options?.indexes ?? []).map(i => ({ model: model[i.index], key: i.key })) as { model: ORS.RelationalObjectIndex<I, O>, key: string }[];
+    // The key __indexes__ will be deleted after it's used so we need to 
+    // get all the indexes before any operations
+    const indexes =
+      items
+        .reduce((acc, cur) => {
+          if (cur.__indexes__) {
+
+            const uids = cur.__indexes__.map((i) => i.split("-") as [string, string]);
+            acc.push(...uids);
+          }
+          return acc;
+        }, [] as [string, string][])
 
 
     function destroyOrphans(params: {
-      item: any;
+      item: ORS.StoreObject<N, I>;
       name: string;
       primaryKey: string;
     }) {
@@ -190,7 +201,7 @@ export function createStore<
 
 
     function destroyReferences(params: {
-      item: any;
+      item: ORS.StoreObject<N, I>;
       name: string;
       primaryKey: string;
     }) {
@@ -200,6 +211,8 @@ export function createStore<
         name,
         primaryKey,
       } = params;
+
+      if (!state[name]) return;
 
       /**
        * If there are no references, destroy the object and orphans
@@ -264,7 +277,7 @@ export function createStore<
      */
     function handleChildRelationshipWithParent(params: {
       name: string;
-      item: any,
+      item: ORS.StoreObject<N, I>;
       parentName: string;
       primaryKey: string;
       parentPrimaryKey: string;
@@ -319,7 +332,7 @@ export function createStore<
      * Upserts a single item. Calls itself recursively based on object relationship.
      */
     function upsertOne(params: {
-      item: any;
+      item: ORS.StoreObject<N, I>;
       parentName?: string;
       parentField?: string;
       parentPrimaryKey?: string;
@@ -345,8 +358,11 @@ export function createStore<
       // If the primary key does not exist on the object, we can't go forward.
       if (!item[primaryKey]) throw new Error(`Expected object "${name}" to have a primaryKey "${primaryKey}".`);
 
-      // If we are destroying this item and all references, call destroyReferences and return
-      if (item.__destroy__) return destroyReferences({ item, name, primaryKey });
+      if ("__destroy__" in item) {
+        // If we are destroying this item and all references, call destroyReferences and return
+        if (item.__destroy__) return destroyReferences({ item, name, primaryKey });
+        delete item.__destroy__;
+      }
 
       // If this table does not exist, initialize it.
       if (!state[name]) state[name] = {};
@@ -360,32 +376,35 @@ export function createStore<
       if (!parentName) {
 
         // If this item is indexed, add it to the index. The index is a set.
-        upsertIndexes
-          .forEach(({ model, key }) => {
+        if ("__indexes__" in item) {
+          item
+            .__indexes__
+            ?.forEach((indexKey) => {
 
-            // An optional key that can be added to an object to skip indexing.
-            // This is useful when returning an array of the same objects, like comments, and you only one one to be added to the index,
-            // the others were just for updates.
-            if (item.__skipIndex__) return;
+              const [indexName] = indexKey.split("-")
 
-            // If this object does not have an index.
-            if (!model.__objects.includes(name as O)) return;
+              // @ts-ignore
+              const indexModel = model[indexName] as ORS.RelationalObjectIndex<I, O>
 
-            const indexKey = `${model.__name}-${key}`
+              // If this object does not have an index, skip it.
+              if (!indexModel?.__objects.includes(name as O)) return;
 
-            // If the model's index does not include this, add it.
-            if (!relationalObject.__indexes.includes(indexKey)) relationalObject.__indexes.push(indexKey)
+              // If the model's index does not include this, add it.
+              if (!relationalObject.__indexes.includes(indexKey)) relationalObject.__indexes.push(indexKey)
 
-            // If it's not defined in state, initialize it.
-            if (!state[indexKey]) (state[indexKey] as ORS.Index) = { index: [], objects: {} };
+              // If it's not defined in state, initialize it.
+              if (!state[indexKey]) (state[indexKey] as ORS.Index) = { index: [], objects: {} };
 
-            // If the key already exists in the index, skip it.
-            const objKey = `${name}-${item[primaryKey]}`;
-            if (!!(state[indexKey] as ORS.Index).objects[objKey]) return;
+              // If the key already exists in the index, skip it.
+              const objKey = `${name}-${item[primaryKey]}`;
+              if (!!(state[indexKey] as ORS.Index).objects[objKey]) return;
 
-            (state[indexKey] as ORS.Index).index.push(objKey);
-            (state[indexKey] as ORS.Index).objects[objKey] = { name, primaryKey, primaryKeyValue: item[primaryKey] };
-          })
+              (state[indexKey] as ORS.Index).index.push(objKey);
+              (state[indexKey] as ORS.Index).objects[objKey] = { name, primaryKey, primaryKeyValue: item[primaryKey] };
+            })
+
+          delete item.__indexes__;
+        }
       }
 
 
@@ -494,11 +513,11 @@ export function createStore<
     items.forEach(item => !!item && upsertOne({ item }))
 
 
-    // Sort the indexes if any.
-    upsertIndexes
-      .forEach(({ model, key }) => {
-        const sort = model.__sort;
-        const indexKey = `${model.__name}-${key}`;
+    indexes
+      ?.forEach(([indexName, indexUid]) => {
+        // @ts-ignore
+        const sort = (model[indexName] as ORS.RelationalObjectIndex<I, O>).__sort;
+        const indexKey = `${indexName}-${indexUid}`;
         if (!sort || !state[indexKey]) return;
         (state[indexKey] as ORS.Index)
           .index

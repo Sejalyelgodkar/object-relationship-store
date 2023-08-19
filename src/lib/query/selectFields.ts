@@ -18,7 +18,7 @@ export default function selectFields<
   object: O
 ) {
 
-  if (!object) return {} as O;;
+  if (!object) return null;
 
   const result: O = {} as O;
 
