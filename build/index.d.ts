@@ -1,9 +1,14 @@
 declare function createStore<N extends string, I extends string, O extends string>(config: ORS.CreateStoreConfig<N, I, O>): {
     getState: () => ORS.State;
+    getReferences: () => {
+        [key: string]: {
+            [primaryKey: string]: `${string}.${string}.${string}`[];
+        };
+    };
     purge: () => void;
     select: <N_1 extends string, O_1 extends Record<string, any>>(options: ORS.SelectOptions<N_1, O_1>) => O_1 | O_1[] | null;
     selectIndex: <E extends I, N_2 extends string, O_2 extends Record<string, any>>(index: `${E}-${string}`, options?: Record<string, ORS.Replace<ORS.SelectOptions<N_2, O_2>, "where", (object: any) => boolean>> | undefined) => O_2[] | null;
-    upsert: (object: any, options?: ORS.UpsertOptions<I>) => void;
+    upsert: (object: ORS.StoreObject<N>, options?: ORS.UpsertOptions<I>) => void;
     subscribe: (listener: () => void) => () => boolean;
 };
 
@@ -99,6 +104,49 @@ declare namespace ORS {
   export type Replace<T, K extends keyof T, U> = Omit<T, K> & { [P in K]?: U };
 
   export type Store<N extends string, I extends string, O extends string> = ReturnType<typeof createStore<N, I, O>>
+
+  export type StoreObject<I> = {
+
+    /**
+     * Your object key values pair
+     */
+    [key: string]: any;
+
+    /**
+     * If this object is being inserted into an index and you want to skip it, set this value to true when upserting.
+     */
+    __skipIndex__?: boolean;
+
+    /**
+     * If this object cannot be identified by the identifier, set this value.
+     */
+    __identify__?: I;
+
+    /**
+     * If you want to remove this object and all references to it in the store,
+     * set this value to true when upserting
+     */
+    __destroy__?: boolean;
+  }
+
+
+  type Ref = `${string}.${string}.${string}`;
+
+  export interface ReferenceStore {
+    current: {
+      [key: string]: {
+        [primaryKey: string]: Ref[]
+      }
+    },
+    upsert: (
+      this: ReferenceStore,
+      val: {
+        name: string;
+        primaryKey: string | number;
+        ref: Ref
+      }
+    ) => void
+  }
 
 }
 
