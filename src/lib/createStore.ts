@@ -102,6 +102,8 @@ export function createStore<
       Object
         .entries(itemSchema.__relationship)
         .forEach(([field, relationship]) => {
+          if (!state[name][item[primaryKey]]) return;
+
           const itemPrimaryKey = state[name][item[primaryKey]][field];
 
           // If there is no primary key, skip
@@ -109,7 +111,6 @@ export function createStore<
 
           // This field in the object is a "hasMany", loop over itemPrimaryKey, it is an array of primary keys.
           if (relationship.__has === "hasMany") {
-
             itemPrimaryKey
               .forEach((pk: any) => {
                 const refs = references.current[relationship.__name][pk];
@@ -122,6 +123,16 @@ export function createStore<
 
                 if (!allSelfRef) return;
 
+                // If we are going to destroy this related object, check it for orphaned children and remove them too.
+                // recursively
+
+                destroyOrphans({
+                  item: { [relationship.__primaryKey]: pk },
+                  name: relationship.__name,
+                  primaryKey: relationship.__primaryKey
+                })
+
+                // Finally,
                 // If all references are to the item we are deleting, remove all refs and delete the object too
                 delete references.current[relationship.__name][pk];
                 delete state[relationship.__name][pk];
@@ -142,6 +153,15 @@ export function createStore<
             })
 
             if (!allSelfRef) return;
+
+
+            // If we are going to destroy this related object, check it for orphaned children and remove them too.
+            // recursively
+            destroyOrphans({
+              item: { [relationship.__primaryKey]: itemPrimaryKey },
+              name: relationship.__name,
+              primaryKey: relationship.__primaryKey
+            })
 
             // If all references are to the item we are deleting, remove all refs and delete the object too
             delete references.current[relationship.__name][itemPrimaryKey];
@@ -185,6 +205,10 @@ export function createStore<
             //  ["user", "10", "images"] = ref.split(".")
             const [refName, refPrimaryKey, refField] = ref.split(".")
 
+            // If this object was destroyed earlier,
+            // can happen when deleting multiple items at once
+            if (!state[refName][refPrimaryKey]) return;
+
             // @ts-ignore
             const refRelation: ORS.RelationalObject<N> = model[refName];
 
@@ -197,7 +221,13 @@ export function createStore<
             }
 
             const index = state[refName][refPrimaryKey][refField].indexOf(itemPrimaryKey);
-            if (index !== - 1) state[refName][refPrimaryKey][refField].splice(index, 1);
+            if (index !== - 1) {
+              if (state[refName][refPrimaryKey][refField].length === 1) {
+                delete state[refName][refPrimaryKey][refField];
+                return;
+              }
+              state[refName][refPrimaryKey][refField].splice(index, 1);
+            }
           })
 
         delete references.current[name][itemPrimaryKey];
@@ -242,6 +272,7 @@ export function createStore<
       if (relationWithParent) {
 
         if (relationWithParent.__has === "hasOne") {
+          references.upsert({ name: relationWithParent.__name, primaryKey: parentPrimaryKey, ref: `${name}.${item[primaryKey]}.${relationWithParent.__alias}` });
           state[name][item[primaryKey]][relationWithParent.__alias] = parentPrimaryKey;
         }
 
@@ -249,12 +280,10 @@ export function createStore<
           const existingItems = state[name][item[primaryKey]][relationWithParent.__alias];
           const isAnArray = Array.isArray(existingItems);
 
-          // references.upsert({ name, primaryKey: item[primaryKey], ref: `${parentName}.${parentPrimaryKey}.${parentField}` });
-
-
           // If the existing items is not an array, it's new, assign it to a
           // new array containg the current item.
           if (!isAnArray) {
+            references.upsert({ name: relationWithParent.__name, primaryKey: parentPrimaryKey, ref: `${name}.${item[primaryKey]}.${relationWithParent.__alias}` });
             state[name][item[primaryKey]][relationWithParent.__alias] = [parentPrimaryKey];
             return;
           }
@@ -262,7 +291,10 @@ export function createStore<
           // The existing items is an array
           // Check if the current item exists. If it does not, add it.
           const exists = !!existingItems.find((id: any) => id === parentPrimaryKey);
-          if (!exists) existingItems.push(parentPrimaryKey)
+          if (!exists) {
+            references.upsert({ name: relationWithParent.__name, primaryKey: parentPrimaryKey, ref: `${name}.${item[primaryKey]}.${relationWithParent.__alias}` });
+            existingItems.push(parentPrimaryKey);
+          }
         }
       }
 

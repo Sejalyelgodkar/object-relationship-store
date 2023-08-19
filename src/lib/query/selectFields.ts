@@ -18,6 +18,8 @@ export default function selectFields<
   object: O
 ) {
 
+  if (!object) return {} as O;;
+
   const result: O = {} as O;
 
   function mapOverFields(fields: (keyof O)[]) {
