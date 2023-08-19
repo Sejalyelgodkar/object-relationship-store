@@ -7,7 +7,6 @@ export namespace ORS {
   }
 
   export interface RelationalObject<N extends string = string> {
-    [field: string]: Primitive | "hasOne" | "hasMany";
     __name: N;
     __primaryKey: string;
     __relationship: Record<string, Has<N>>;
@@ -28,10 +27,6 @@ export namespace ORS {
     __sort: ((a: any, b: any) => 1 | -1 | 0) | null;
   }
 
-
-  export type Primitive = "string" | "number" | "boolean" | "bigint";
-
-  export type Schema = Record<string, Primitive>
 
   export interface Has<N extends string> {
     __name: N;

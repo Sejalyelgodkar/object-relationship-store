@@ -2,11 +2,11 @@ import { posts } from "./data";
 import { createStore, createRelationalObject, createRelationalObjectIndex } from "./lib/index";
 
 
-const user = createRelationalObject("user", { id: "number" })
-const image = createRelationalObject("image", { id: "number" })
-const imageThumbnail = createRelationalObject("thumbnail", { id: "number" })
-const post = createRelationalObject("post", { id: "number" })
-const postComment = createRelationalObject("postComment", { id: "number" })
+const user = createRelationalObject("user")
+const image = createRelationalObject("image")
+const imageThumbnail = createRelationalObject("thumbnail")
+const post = createRelationalObject("post")
+const postComment = createRelationalObject("postComment")
 
 const profilePosts = createRelationalObjectIndex("profilePosts", [post])
 const homeFeed = createRelationalObjectIndex("homeFeed", [post])

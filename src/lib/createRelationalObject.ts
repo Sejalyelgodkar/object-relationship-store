@@ -17,19 +17,19 @@ function has<N extends string>(object: ORS.RelationalObject<N>, __has: ORS.Has<N
   return relationship
 }
 
-
+/**
+ * @param primaryKey Default is "id", otherwise specify what the primary key of the object is.
+ */
 export function createRelationalObject<
 N extends string
 >(
   name: N,
-  schema: ORS.Schema,
-  options?: { primaryKey?: string }
+  primaryKey?: string,
 ): ORS.RelationalCreator<N> {
 
   const object = {
-    ...schema,
     __name: name,
-    __primaryKey: options?.primaryKey ?? "id",
+    __primaryKey: primaryKey ?? "id",
     __relationship: { },
   }
 
@@ -48,7 +48,6 @@ N extends string
         )
       ) throw new Error(`"${object.__name}" reference already exists in "${self.__name}" as "${existing[0]}" with the primary key (pk) "${object.__primaryKey}". "${self.__name}" table failed to create a hasOne relationship with "${name}" because it has the same primary key "${object.__primaryKey}" as "${existing[0]}". The primary key for "${existing[0]}" and "${name}" are not unique.`);
 
-      self[name] = "hasOne"
       self.__relationship[name] = has(object, "hasOne", name);
 
       return this;
@@ -67,7 +66,6 @@ N extends string
         )
       ) throw new Error(`"${object.__name}" reference already exists in "${self.__name}" as "${existing[0]}" with the primary key (pk) "${object.__primaryKey}". "${self.__name}" table failed to create a hasOne relationship with "${name}" because it has the same primary key "${object.__primaryKey}" as "${existing[0]}". The primary key for "${existing[0]}" and "${name}" are not unique.`);
 
-      self[name] = "hasMany"
       self.__relationship[name] = has(object, "hasMany", name);
 
       return this;

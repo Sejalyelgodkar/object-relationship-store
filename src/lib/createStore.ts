@@ -38,8 +38,6 @@ export function createStore<
   const model = relationalCreators
     .reduce((r, t) => {
       const { hasOne, hasMany, ...next } = t
-      const k = next.__relationship[next.__primaryKey]?.__name ?? next.__primaryKey;
-      if (!(next as any)[k]) throw new Error(`The table "${next.__name}" does not have a primary key (pk) "${t.__primaryKey}", pk should be listed here ${JSON.stringify(t)}`);
       return { ...r, [next.__name]: next }
     }, {} as ORS.Model<N>)
 
@@ -352,7 +350,7 @@ export function createStore<
           // If this field is a related field, traverse in recursively
           if (!!relationalObject.__relationship[field]) {
 
-            const hasMany = relationalObject[field] === "hasMany";
+            const hasMany = relationalObject.__relationship[field].__has === "hasMany";
 
             if (!item[field]) return;
 
