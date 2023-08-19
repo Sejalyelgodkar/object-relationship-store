@@ -1,4 +1,6 @@
 declare function createStore<N extends string, I extends string, O extends string>(config: ORS.CreateStoreConfig<N, I, O>): {
+    save: (callback: (store: ORS.RestoreStore) => void) => void;
+    restore: (store: ORS.RestoreStore) => void;
     getState: () => ORS.State;
     getReferences: () => {
         [key: string]: {
@@ -19,10 +21,11 @@ declare namespace ORS {
   }
 
   export interface RelationalObject<N extends string = string> {
-    [field: string]: Primitive | "hasOne" | "hasMany";
+    [field: string]: Has<N>;
     __name: N;
     __primaryKey: string;
     __relationship: Record<string, Has<N>>;
+    __indexes: string[];
   }
 
   export interface RelationalCreator<N extends string = string> extends RelationalObject<N> {
@@ -40,10 +43,6 @@ declare namespace ORS {
     __sort: ((a: any, b: any) => 1 | -1 | 0) | null;
   }
 
-
-  export type Primitive = "string" | "number" | "boolean" | "bigint";
-
-  export type Schema = Record<string, Primitive>
 
   export interface Has<N extends string> {
     __name: N;
@@ -68,6 +67,8 @@ declare namespace ORS {
      * 
      */
     identifier: { [K in N]: IdentifierFunction<any>; }
+
+    initialStore?: ORS.RestoreStore
   }
 
   export interface State {
@@ -125,6 +126,8 @@ declare namespace ORS {
     /**
      * If you want to remove this object and all references to it in the store,
      * set this value to true when upserting
+     * 
+     * The object, all references and all other objects that referenced only this object (orphaned children) will be destroyed.
      */
     __destroy__?: boolean;
   }
@@ -148,11 +151,17 @@ declare namespace ORS {
     ) => void
   }
 
+
+  export interface RestoreStore {
+    state: ORS.State;
+    references: ORS.ReferenceStore["current"];
+  }
 }
 
-declare function createRelationalObject<N extends string>(name: N, schema: ORS.Schema, options?: {
-    primaryKey?: string;
-}): ORS.RelationalCreator<N>;
+/**
+ * @param primaryKey Default is "id", otherwise specify what the primary key of the object is.
+ */
+declare function createRelationalObject<N extends string>(name: N, primaryKey?: string): ORS.RelationalCreator<N>;
 
 /**
  * Creates an object index.
