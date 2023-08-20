@@ -1,186 +1,11 @@
+import { posts as anArrayOfPostObjects } from "./data";
 import withOptions from "./lib/helper/withOptions";
 import { createStore, createRelationalObject, createRelationalObjectIndex } from "./lib/index";
 
 /**
  * Example data
  */
-const posts = [
-  {
-    "id": 10,
-    "caption": "This is post 10",
-    "createdAt": "2023-06-26T14:24:04.000Z",
-    "images": [
-      {
-        "id": 54,
-        "aspectRatio": 0.890625,
-        "thumbnails": [
-          { "id": 206, "uri": "/post.1687789438225.0-1.128.jpeg" },
-          { "id": 207, "uri": "/post.1687789438225.0-2.256.jpeg" },
-        ]
-      },
-      {
-        "id": 55,
-        "aspectRatio": 0.773438,
-        "thumbnails": [
-          { "id": 211, "uri": "/post.1687789438226.1-1.128.jpeg" },
-          { "id": 212, "uri": "/post.1687789438226.1-2.256.jpeg" },
-        ]
-      },
-      {
-        "id": 56,
-        "aspectRatio": 0.890625,
-        "thumbnails": [
-          { "id": 216, "uri": "/post.1687789438226.2-1.128.jpeg" },
-          { "id": 217, "uri": "/post.1687789438227.2-2.256.jpeg" },
-        ]
-      },
-      {
-        "id": 57,
-        "aspectRatio": 0.890625,
-        "thumbnails": [
-          { "id": 221, "uri": "/post.1687789438227.3-1.128.jpeg" },
-          { "id": 222, "uri": "/post.1687789438227.3-2.256.jpeg" },
-        ]
-      }
-    ],
-    "user": {
-      "id": 2,
-      "username": "qwerty",
-      "profileImage": {
-        "id": 48,
-        "aspectRatio": 0.777344,
-        "thumbnails": [
-          { "id": 186, "uri": "/profilePhoto.256.jpeg?1687444436097" },
-          { "id": 187, "uri": "/profilePhoto.512.jpeg?1687444436097" },
-        ]
-      }
-    }
-  },
-  {
-    "id": 9,
-    "caption": "This is post 9",
-    "createdAt": "2023-06-25T15:03:16.000Z",
-    "images": [
-      {
-        "id": 53,
-        "aspectRatio": 0.890625,
-        "thumbnails": [
-          { "id": 201, "uri": "/post.1687705393873.0-1.128.jpeg" },
-          { "id": 202, "uri": "/post.1687705393873.0-2.256.jpeg" },
-        ]
-      }
-    ],
-    "user": {
-      "id": 2,
-      "username": "qwerty",
-      "profileImage": {
-        "id": 48,
-        "aspectRatio": 0.777344,
-        "thumbnails": [
-          { "id": 186, "uri": "/profilePhoto.256.jpeg?1687444436097" },
-          { "id": 187, "uri": "/profilePhoto.512.jpeg?1687444436097" },
-        ]
-      }
-    }
-  },
-  {
-    "id": 8,
-    "caption": "This is post 8",
-    "createdAt": "2023-06-21T16:13:41.000Z",
-    "images": [
-      {
-        "id": 47,
-        "aspectRatio": 0.890625,
-        "thumbnails": [
-          { "id": 181, "uri": "/post.1687364014093.0-1.128.jpeg" },
-          { "id": 182, "uri": "/post.1687364014093.0-2.256.jpeg" },
-        ]
-      }
-    ],
-    "user": {
-      "id": 1,
-      "username": "the_overlord",
-      "profileImage": {
-        "id": 52,
-        "aspectRatio": 1.38378,
-        "thumbnails": [
-          { "id": 198, "uri": "/profilePhoto.256.jpeg?1687545543490" },
-          { "id": 199, "uri": "/profilePhoto.512.jpeg?1687545543491" },
-        ]
-      }
-    }
-  },
-  {
-    "id": 7,
-    "caption": "This is post 7",
-    "createdAt": "2023-06-21T13:48:10.000Z",
-    "images": [
-      {
-        "id": 46,
-        "aspectRatio": 1.77778,
-        "thumbnails": [
-          { "id": 176, "uri": "/post.1687355288548.0-1.128.jpeg" },
-          { "id": 177, "uri": "/post.1687355288548.0-2.256.jpeg" },
-        ]
-      }
-    ],
-    "user": {
-      "id": 1,
-      "username": "the_overlord",
-      "profileImage": {
-        "id": 52,
-        "aspectRatio": 1.38378,
-        "thumbnails": [
-          { "id": 198, "uri": "/profilePhoto.256.jpeg?1687545543490" },
-          { "id": 199, "uri": "/profilePhoto.512.jpeg?1687545543491" },
-        ]
-      }
-    }
-  },
-  {
-    "id": 6,
-    "caption": "This is post 6",
-    "createdAt": "2023-06-20T17:02:23.000Z",
-    "images": [
-      {
-        "id": 43,
-        "aspectRatio": 0.710938,
-        "thumbnails": [
-          { "id": 161, "uri": "/post.1687280539761.0-1.128.jpeg" },
-          { "id": 162, "uri": "/post.1687280539761.0-2.256.jpeg" },
-        ]
-      },
-      {
-        "id": 44,
-        "aspectRatio": 1.6,
-        "thumbnails": [
-          { "id": 166, "uri": "/post.1687280539761.1-1.128.jpeg" },
-          { "id": 167, "uri": "/post.1687280539761.1-2.256.jpeg", },
-        ]
-      },
-      {
-        "id": 45,
-        "aspectRatio": 1.77778,
-        "thumbnails": [
-          { "id": 171, "uri": "/post.1687280539762.2-1.128.jpeg" },
-          { "id": 172, "uri": "/post.1687280539762.2-2.256.jpeg" },
-        ]
-      }
-    ],
-    "user": {
-      "id": 2,
-      "username": "qwerty",
-      "profileImage": {
-        "id": 48,
-        "aspectRatio": 0.777344,
-        "thumbnails": [
-          { "id": 186, "uri": "/profilePhoto.256.jpeg?1687444436097" },
-          { "id": 187, "uri": "/profilePhoto.512.jpeg?1687444436097" },
-        ]
-      }
-    }
-  }
-]
+const posts = [...anArrayOfPostObjects]
 
 // A helper function for the documentation.
 // Don't write tests like this, use jest or something else.
@@ -191,50 +16,33 @@ const isTrue = (message: string, value: boolean) => {
 
 const user = createRelationalObject("user")
 const image = createRelationalObject("image")
-const imageThumbnail = createRelationalObject("thumbnail")
+const thumbnail = createRelationalObject("thumbnail")
 const post = createRelationalObject("post")
-const postComment = createRelationalObject("postComment")
 
 const homeFeed = createRelationalObjectIndex("homeFeed", [post])
-const postComments = createRelationalObjectIndex("postComments", [postComment], (a, b) => a.id > b.id ? -1 : 1)
-
-postComment.hasMany(postComment, "replies")
-postComment.hasOne(postComment, "replyingTo")
-postComment.hasOne(post)
-postComment.hasOne(user)
 
 post.hasOne(user)
 post.hasMany(image, "images")
 
-user.hasMany(image, "images")
-image.hasMany(user, "users")
-
 user.hasMany(post, "posts")
 user.hasOne(image, "profileImage")
-user.hasOne(image, "bannerImage")
-user.hasOne(image, "layoutImage")
-image.hasMany(imageThumbnail, "thumbnails")
+image.hasMany(thumbnail, "thumbnails")
 
 const store = createStore({
   relationalCreators: [
     user,
     image,
-    imageThumbnail,
+    thumbnail,
     post,
-    postComment,
   ],
-  indexes: [homeFeed, postComments],
+  indexes: [homeFeed],
   identifier: {
     user: o => "username" in o,
     post: o => "caption" in o,
     image: o => "aspectRatio" in o,
     thumbnail: o => "uri" in o,
-    postComment: o => "replyingToId" in o
   }
 });
-
-export type From = "user" | "post" | "image" | "thumbnail" | "postComment"
-
 
 console.log("\n\n1. UPSERT DATA INTO THE STORE\n")
 
@@ -418,13 +226,6 @@ const result = store.select({
    */
   join: [
     {
-      on: "users",
-      fields: "*",
-      join: [
-        { on: "profileImage", fields: "*" }
-      ]
-    },
-    {
       on: "thumbnails",
       fields: ["id"]
     }
@@ -433,7 +234,7 @@ const result = store.select({
 
 // We have a result here.
 // console.log(result)
-isTrue("Result is the object we expected", JSON.stringify(result) === '[{"id":48,"aspectRatio":0.777344,"thumbnails":[{"id":186},{"id":187}],"users":[{"id":2,"username":"qwerty","profileImage":{"id":48,"aspectRatio":0.777344,"thumbnails":[186,187],"users":[2]},"posts":[10,9,6]}]}]')
+isTrue("Result is the object we expected", JSON.stringify(result) === '[{"id":48,"aspectRatio":0.777344,"thumbnails":[{"id":186},{"id":187}]}]')
 
 
 /**
@@ -456,13 +257,87 @@ console.log("\nEND OF SELECT DEMO\n")
  */
 
 
-// const selected2 = store.selectIndex("homeFeed-1", {
-//   post: {
-//     from: "post",
-//     fields: ["id"],
-//   },
-//   user: {
-//     from:"user",
-//     fields: ["id"]
-//   }
-// })
+
+console.log("\n\n4. SELECT DATA FROM INDEX\n")
+
+/**
+ * While the above ability to upsert, select and delete covers most cases,
+ * sometimes the order in which the data was received is important.
+ * 
+ * Like in a feed where you can scroll down infinitely.
+ * 
+ * For this, example, we have "homeFeed" index
+ * 
+ * const homeFeed = createRelationalObjectIndex("homeFeed", [post])
+ * 
+ * We named it "homeFeed" and said that it contains post objects. You can pass multiple objects to to an index,
+ * like this for example
+ * 
+ * Here we are saying homeFeed contains posts, articles and newsArticles.
+ * const homeFeed = createRelationalObjectIndex("homeFeed", [post, article, newsArticle])
+ * 
+ * In this example, we will use only one type of object in the index, "post".
+ * 
+ * The index behaves very similar to a regular select and upsert, there are only a few differences
+ */
+
+// Upsert data
+// Here we used withOptions() to upsert and array of posts to the store, and we
+// Also mentioned an index
+store.upsert(withOptions(posts, { __indexes__: ["homeFeed-home"] }))
+
+/**
+ * 
+ * An indexKey is broken into two parts
+ * "homeFeed" - which is the name of the index
+ * "home" - which is a unique key
+ * 
+ * They are seperated by "-"
+ * 
+ * This is because if you have an index called "comments", you want seperate indexes for them.
+ * Example comments page for post id 1, 2, 3
+ * All have different comments
+ * 
+ * So the index will be something like this for example
+ * By providing different unique keys, "comments" will create new indexes for each of them.
+ * "comments-postId1"
+ * "comments-postId2"
+ * "comments-postId3"
+ * 
+ */
+
+/**
+ * The order of the index by default will be the order in which it was upserted,
+ * However, when creating an index, you can pass a sorting function like so:~
+ * 
+ * const homeFeed = createRelationalObjectIndex("homeFeed", [post], (a, b) => a.id > b.id ? -1 : 1)
+ */
+
+const selected = store.selectIndex("homeFeed-home", {
+
+  /**
+   * This select object is the same as the one above except,
+   * The "where" can only be a function
+   */
+  post: {
+    from: "post",
+    fields: ["id"],
+  },
+
+  // If we had more than one object type in this index
+  // article: { from: "article", fields: ["id"] }
+})
+
+isTrue("Result is the an array containg posts, in the order it was upserted.", JSON.stringify(selected) === '[{"id":10},{"id":9},{"id":8},{"id":7},{"id":6}]')
+
+// Here we upsert another post with ID of 5
+store.upsert(withOptions({ id: 5 }, { __indexes__: ["homeFeed-home"], __identify__: "post" }))
+
+// We select the index again
+const selected2 = store.selectIndex("homeFeed-home", { post: { from: "post", fields: ["id"] } })
+
+isTrue("The additional post was added to the index.", JSON.stringify(selected2) === '[{"id":10},{"id":9},{"id":8},{"id":7},{"id":6},{"id":5}]')
+
+console.log("\nEND OF SELECT INDEX DEMO\n")
+
+
