@@ -26,7 +26,7 @@ export default function selectFields<
     fields
       .forEach((field) => {
         const value = object[field];
-        if (!value) return;
+        if (value === undefined) return;
         result[field] = value;
       })
   }
