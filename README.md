@@ -352,4 +352,22 @@ isTrue("The additional post was added to the index.", JSON.stringify(selected2) 
 console.log("\nEND OF SELECT INDEX DEMO\n")
 
 
+/**
+ * If we want to remove the object from an index without destroying it, it can be done using __removeFromIndexes__
+ */
+
+// Here we upsert post with ID of 5, and remove it from the homeFeed-home index
+// Upsert with and update the current object if needed.
+store.upsert(withOptions({ id: 5, content: "Update fields if needed" }, { __removeFromIndexes__: "homeFeed-home", __identify__: "post" }))
+
+// @ts-ignore
+const result1 = store.select({ from: "post", fields: ["id", "content"], where: { id: 5 } })
+
+// @ts-ignore
+const selected3 = store.selectIndex("homeFeed-home", { post: { from: "post", fields: ["id"] } })
+isTrue("The post was removed from the index.", JSON.stringify(selected3) === '[{"id":10},{"id":9},{"id":8},{"id":7},{"id":6}]')
+
+//@ts-ignore
+isTrue("The content in the post was updated.", result1.content === 'Update fields if needed')
+
 ```

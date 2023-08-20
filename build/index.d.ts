@@ -113,7 +113,12 @@ declare namespace ORS {
     /**
      * The indexes this object belongs to
      */
-    __indexes__?: `${I}-${string}`[];
+    __indexes__?: `${I}-${string}` | `${I}-${string}`[];
+
+    /**
+     * The indexes to remove this object from
+     */
+    __removeFromIndexes__?: `${I}-${string}` | `${I}-${string}`[];
 
     /**
      * If this object cannot be identified by the identifier, set this value.

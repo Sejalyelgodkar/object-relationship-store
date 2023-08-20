@@ -37,5 +37,10 @@ function oneWithOptions<
   else
     if (options.__indexes__) object["__indexes__"] = options.__indexes__;
 
+  if (typeof options.__removeFromIndexes__ === "function")
+    object["__removeFromIndexes__"] = options.__removeFromIndexes__(object);
+  else
+    if (options.__removeFromIndexes__) object["__removeFromIndexes__"] = options.__removeFromIndexes__;
+  
   return object
 }

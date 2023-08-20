@@ -84,8 +84,11 @@ export function createStore<
     const indexes =
       items
         .reduce((acc, cur) => {
+          if (typeof cur.__indexes__ === "string") {
+            acc.push(cur.__indexes__.split("-") as [string, string]);
+            return acc;
+          }
           if (cur.__indexes__) {
-
             const uids = cur.__indexes__.map((i) => i.split("-") as [string, string]);
             acc.push(...uids);
           }
@@ -377,8 +380,8 @@ export function createStore<
 
         // If this item is indexed, add it to the index. The index is a set.
         if ("__indexes__" in item) {
-          item
-            .__indexes__
+          const __indexes__ = typeof item.__indexes__ === "string" ? [item.__indexes__] : item.__indexes__;
+          __indexes__
             ?.forEach((indexKey) => {
 
               const [indexName] = indexKey.split("-")
@@ -404,6 +407,25 @@ export function createStore<
             })
 
           delete item.__indexes__;
+        }
+
+        if ("__removeFromIndexes__" in item) {
+          const __removeFromIndexes__ = typeof item.__removeFromIndexes__ === "string" ? [item.__removeFromIndexes__] : item.__removeFromIndexes__;
+
+          __removeFromIndexes__
+            ?.forEach((indexKey) => {
+
+              if (!state[indexKey]) return;
+
+              const objKey = `${name}-${item[primaryKey]}`;
+              const currentIndex = state[indexKey] as ORS.Index;
+              const selectedIndex = currentIndex.index.indexOf(objKey);
+
+              if (selectedIndex > -1) {
+                state[indexKey].index.splice(selectedIndex, 1);
+                delete state[indexKey].objects[objKey]
+              }
+            })
         }
       }
 
