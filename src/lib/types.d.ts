@@ -21,7 +21,11 @@ export namespace ORS {
 
   export type IndexedObject = { name: string; primaryKey: string, primaryKeyValue: any }
 
-  export type Index = { index: string[]; objects: { [key: string]: IndexedObject } }
+  /**
+   * An array of indexes. 
+   * Structure: "objectName-objectPrimaryKey"
+   */
+  export type Index = `${string}-${string}`[]
 
   export interface RelationalObjectIndex<I extends string, O extends string> {
     __name: I;

@@ -19,7 +19,7 @@ const image = createRelationalObject("image")
 const thumbnail = createRelationalObject("thumbnail")
 const post = createRelationalObject("post")
 
-const homeFeed = createRelationalObjectIndex("homeFeed", [post])
+const homeFeed = createRelationalObjectIndex("homeFeed", [post], (a, b) => a.id > b.id ? -1 : 1)
 
 post.hasOne(user)
 post.hasMany(image, "images")

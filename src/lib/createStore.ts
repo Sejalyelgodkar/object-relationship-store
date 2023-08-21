@@ -193,12 +193,9 @@ export function createStore<
         .__indexes
         .forEach(indexName => {
           const index = (state[indexName] as ORS.Index);
-          const key = `${name}-${item[primaryKey]}`;
-          const i = index.index.indexOf(key);
-          if (i !== -1) {
-            delete index.objects[`${name}-${item[primaryKey]}`];
-            index.index.splice(i, 1);
-          }
+          const objectKey: ORS.Index[number] = `${name}-${item[primaryKey]}`;
+          const i = index.indexOf(objectKey);
+          if (i !== -1) index.splice(i, 1);
         })
     }
 
@@ -396,14 +393,13 @@ export function createStore<
               if (!relationalObject.__indexes.includes(indexKey)) relationalObject.__indexes.push(indexKey)
 
               // If it's not defined in state, initialize it.
-              if (!state[indexKey]) (state[indexKey] as ORS.Index) = { index: [], objects: {} };
+              if (!state[indexKey]) (state[indexKey] as ORS.Index) = [];
 
               // If the key already exists in the index, skip it.
-              const objKey = `${name}-${item[primaryKey]}`;
-              if (!!(state[indexKey] as ORS.Index).objects[objKey]) return;
+              const objKey: ORS.Index[number] = `${name}-${item[primaryKey]}`;
+              if (!!(state[indexKey] as ORS.Index).includes(objKey)) return;
 
-              (state[indexKey] as ORS.Index).index.push(objKey);
-              (state[indexKey] as ORS.Index).objects[objKey] = { name, primaryKey, primaryKeyValue: item[primaryKey] };
+              (state[indexKey] as ORS.Index).push(objKey);
             })
 
           delete item.__indexes__;
@@ -417,15 +413,13 @@ export function createStore<
 
               if (!state[indexKey]) return;
 
-              const objKey = `${name}-${item[primaryKey]}`;
+              const objKey: ORS.Index[number] = `${name}-${item[primaryKey]}`;
               const currentIndex = state[indexKey] as ORS.Index;
-              const selectedIndex = currentIndex.index.indexOf(objKey);
-
-              if (selectedIndex > -1) {
-                state[indexKey].index.splice(selectedIndex, 1);
-                delete state[indexKey].objects[objKey]
-              }
+              const selectedIndex = currentIndex.indexOf(objKey);
+              if (selectedIndex > -1) state[indexKey].splice(selectedIndex, 1);
             })
+
+          delete item.__removeFromIndexes__;
         }
       }
 
@@ -542,11 +536,10 @@ export function createStore<
         const indexKey = `${indexName}-${indexUid}`;
         if (!sort || !state[indexKey]) return;
         (state[indexKey] as ORS.Index)
-          .index
           .sort((a, b) => {
-            const itemA = (state[indexKey] as ORS.Index).objects[a]
-            const itemB = (state[indexKey] as ORS.Index).objects[b]
-            return sort(state[itemA.name][itemA.primaryKeyValue], state[itemB.name][itemB.primaryKeyValue])
+            const [aName, aPk] = a.split("-")
+            const [bName, bPk] = b.split("-")
+            return sort(state[aName][aPk], state[bName][bPk])
           })
       })
 
@@ -576,14 +569,15 @@ export function createStore<
     const result: O[] = [];
     if (!indexes) return null;
     indexes
-      .index
-      .forEach((key: string) => {
-        const recordIndex = indexes.objects[key];
-        const queryOptions = options ? options[recordIndex.name] : { from: recordIndex.name, fields: "*" } as ORS.Replace<ORS.SelectOptions<N, O>, "where", ((object: any) => boolean)>;
+      .forEach((objectKey) => {
+        const [objectName, objectPk] = objectKey.split("-");
+        // @ts-ignore
+        const { __primaryKey } = model[objectName] as ORS.RelationalObject<N>;
+        const queryOptions = options ? options[objectName] : { from: objectName, fields: "*" } as ORS.Replace<ORS.SelectOptions<N, O>, "where", ((object: any) => boolean)>;
 
-        if (!queryOptions) throw new Error(`selectIndex() expected SelectOptions for "${recordIndex.name}" in the index "${index}".`);
+        if (!queryOptions) throw new Error(`selectIndex() expected SelectOptions for "${objectName}" in the index "${index}".`);
 
-        const object = querySelect(model, state, { ...queryOptions, where: { [recordIndex.primaryKey]: recordIndex.primaryKeyValue } } as ORS.SelectOptions<any, any>);
+        const object = querySelect(model, state, { ...queryOptions, where: { [__primaryKey]: objectPk } } as ORS.SelectOptions<any, any>);
         if (!object) return;
         if (!queryOptions?.where) return result.push(object);
         if (typeof queryOptions?.where === "function" && !queryOptions?.where(object)) return;
