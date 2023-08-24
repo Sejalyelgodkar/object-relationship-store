@@ -65,7 +65,6 @@ export function createStore<
       delete item.__identify__;
       return name;
     }
-    delete item.__identify__;
     for (const key in identifier) {
       if (!Object.prototype.hasOwnProperty.call(identifier, key)) continue;
       const validator = identifier[key];
