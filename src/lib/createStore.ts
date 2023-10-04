@@ -353,7 +353,6 @@ export function createStore<
 
       const primaryKey = relationalObject.__primaryKey;
 
-
       // If the primary key does not exist on the object, we can't go forward.
       if (!item[primaryKey]) throw new Error(`Expected object "${name}" to have a primaryKey "${primaryKey}".`);
 
@@ -444,6 +443,11 @@ export function createStore<
                 parentField: field,
                 parentName: name,
               })
+              return;
+            }
+
+            if (item[field].every((i: any) => typeof i !== "object")) {
+              state[name][item[primaryKey]][field] = [...item[field]]
               return;
             }
 
@@ -549,12 +553,12 @@ export function createStore<
   function upsertWhere<
     N extends string,
     O extends Record<string, any>
-  >(options: ORS.SelectOptions<N, O>, callback: (current: O | null) => O | null) {
+  >(options: ORS.SelectOptions<N, O>, callback: (current: Partial<O> | null) => Partial<O> | null) {
     const current = select(options) as O | null;
-    const next = callback(current);
+    const next = callback(current) as O | null;
     if (!next) return;
     if (!current) return upsert({ ...next, __identify__: options.from });
-    upsert({ ...current, ...next, __identify__: options.from })
+    upsert({ ...current, ...next, __identify__: options.from });
   }
 
   const select = memo(<

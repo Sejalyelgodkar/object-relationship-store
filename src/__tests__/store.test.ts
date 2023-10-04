@@ -79,3 +79,31 @@ test("Memory should not increase when we add more relationships", () => {
   // Increased very slightly because of an additional field and a few extra references
   expect(memoryStore2).toBe(memoryStore1 + 0.0000476837158203125)
 })
+
+
+
+test("upsertWhere", () => {
+
+  const store1 = createStore({
+    relationalCreators: [user, post, image, thumbnail],
+    identifier: {
+      'user': o => !!o.username,
+      'image': o => !!o.aspectRatio,
+      'thumbnail': o => !!o.uri,
+      'post': o => !!o.caption,
+    }
+  });
+
+  store1.upsert(posts)
+
+  store1.upsertWhere<any, any>({
+    from: "image",
+    fields: ["id", "thumbnails"],
+    where: {id: 54},
+    join: [{on: "thumbnails", fields: ["id", "uri"]}]
+  }, (current) => {
+    return {id: 54, thumbnails: [206]}
+  })
+
+  expect(store1.getState().image[54].thumbnails.length).toBe(1)
+})
