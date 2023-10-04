@@ -1,6 +1,7 @@
 import { type ORS } from "./types";
 import querySelect from "./query/select";
 import { deepCopy, memo } from "./utils";
+import withOptions from "./helper/withOptions";
 
 export function createStore<
   N extends string,
@@ -452,13 +453,18 @@ export function createStore<
 
             if (item[field].every((i: any) => typeof i !== "object")) {
               const relationName = relationalObject.__relationship[field].__name;
-              const relationshipObjects = state[relationName];
               const itemPrimaryKey = item[primaryKey];
-              state[name][itemPrimaryKey][field] = item[field].filter((pk: any) => {
-                const hasObject = !!relationshipObjects[pk];
-                if(hasObject) references.remove({ name: relationName, primaryKey: pk, ref: `${name}.${itemPrimaryKey}.${field}` });
-                return hasObject
-              });
+              const items = state[name][itemPrimaryKey][field];
+              const next = [];
+              for (let i = 0; i < items.length; i++) {
+                const pk = items[i];
+                if (!item[field].includes(pk)) {
+                  references.remove({ name: relationName, primaryKey: pk, ref: `${name}.${itemPrimaryKey}.${field}` });
+                  continue;
+                }
+                next.push(pk)
+              }
+              state[name][itemPrimaryKey][field] = next;
               return;
             }
 
@@ -566,8 +572,9 @@ export function createStore<
     O extends Record<string, any>
   >(options: ORS.SelectOptions<N, O>, callback: (current: Partial<O> | null) => Partial<O> | null) {
     const current = select(options) as O | null;
-    const next = callback(current) as O | null;
+    const next = callback(current) as O | O[] | null;
     if (!next) return;
+    if (Array.isArray(next)) return upsert(withOptions<any, any>(next, { __identify__: options.from }));
     if (!current) return upsert({ ...next, __identify__: options.from });
     upsert({ ...current, ...next, __identify__: options.from });
   }
