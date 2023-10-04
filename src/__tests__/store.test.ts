@@ -102,7 +102,7 @@ test("upsertWhere", () => {
     where: {id: 54},
     join: [{on: "thumbnails", fields: ["id", "uri"]}]
   }, (current) => {
-    return {id: 54, thumbnails: [206]}
+    return {id: 54, thumbnails: [206, 99999999]}
   })
 
   expect(store1.getState().image[54].thumbnails.length).toBe(1)

@@ -447,7 +447,8 @@ export function createStore<
             }
 
             if (item[field].every((i: any) => typeof i !== "object")) {
-              state[name][item[primaryKey]][field] = [...item[field]]
+              const relationshipObjects = state[relationalObject.__relationship[field].__name];
+              state[name][item[primaryKey]][field] = item[field].filter((i: any) => !!relationshipObjects[i]);
               return;
             }
 
