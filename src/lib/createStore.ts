@@ -26,6 +26,10 @@ export function createStore<
       }
       if (this.current[val.name][val.primaryKey].includes(val.ref)) return;
       this.current[val.name][val.primaryKey].push(val.ref)
+    },
+    remove(this, val) {
+      const { name, primaryKey, ref } = val;
+      this.current[name][primaryKey] = this.current[name][primaryKey].filter(r => r !== ref)
     }
   };
 
@@ -447,8 +451,14 @@ export function createStore<
             }
 
             if (item[field].every((i: any) => typeof i !== "object")) {
-              const relationshipObjects = state[relationalObject.__relationship[field].__name];
-              state[name][item[primaryKey]][field] = item[field].filter((i: any) => !!relationshipObjects[i]);
+              const relationName = relationalObject.__relationship[field].__name;
+              const relationshipObjects = state[relationName];
+              const itemPrimaryKey = item[primaryKey];
+              state[name][itemPrimaryKey][field] = item[field].filter((pk: any) => {
+                const hasObject = !!relationshipObjects[pk];
+                if(hasObject) references.remove({ name: relationName, primaryKey: pk, ref: `${name}.${itemPrimaryKey}.${field}` });
+                return hasObject
+              });
               return;
             }
 

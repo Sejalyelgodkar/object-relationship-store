@@ -131,10 +131,18 @@ export namespace ORS {
       [key: string]: {
         [primaryKey: string]: Ref[]
       }
-    },
+    };
     upsert: (
       this: ReferenceStore,
       val: {
+        name: string;
+        primaryKey: string | number;
+        ref: Ref
+      }
+    ) => void;
+    remove: (
+      this: ReferenceStore,
+      ref: {
         name: string;
         primaryKey: string | number;
         ref: Ref
