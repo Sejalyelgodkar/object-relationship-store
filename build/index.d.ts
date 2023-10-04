@@ -11,6 +11,7 @@ declare function createStore<N extends string, I extends string, O extends strin
     select: <N_1 extends string, O_1 extends Record<string, any>>(options: ORS.SelectOptions<N_1, O_1>) => O_1 | O_1[] | null;
     selectIndex: <E extends I, N_2 extends string, O_2 extends Record<string, any>>(index: `${E}-${string}`, options?: Record<string, ORS.Replace<ORS.SelectOptions<N_2, O_2>, "where", (object: any) => boolean>> | undefined) => O_2[] | null;
     upsert: (object: ORS.StoreObject<N, I> | ORS.StoreObject<N, I>[]) => void;
+    upsertWhere: <N_3 extends string, O_3 extends Record<string, any>>(where: ORS.SelectOptions<N_3, O_3>, callback: (current: O_3 | null) => O_3) => void;
     subscribe: (listener: () => void) => () => boolean;
     destroy: (name: N | `${I}-${string}`) => void;
 };

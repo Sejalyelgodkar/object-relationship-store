@@ -546,6 +546,14 @@ export function createStore<
     listeners.forEach(listener => listener());
   }
 
+  function upsertWhere<
+    N extends string,
+    O extends Record<string, any>
+  >(where: ORS.SelectOptions<N, O>, callback: (current: O | null) => O) {
+    const current = select(where) as O | null;
+    if (!current) return upsert(callback(current));
+    upsert({ ...current, ...callback(current) })
+  }
 
   const select = memo(<
     N extends string,
@@ -623,6 +631,7 @@ export function createStore<
     select,
     selectIndex,
     upsert,
+    upsertWhere,
     subscribe,
     destroy
   }
