@@ -549,10 +549,12 @@ export function createStore<
   function upsertWhere<
     N extends string,
     O extends Record<string, any>
-  >(where: ORS.SelectOptions<N, O>, callback: (current: O | null) => O) {
-    const current = select(where) as O | null;
-    if (!current) return upsert(callback(current));
-    upsert({ ...current, ...callback(current) })
+  >(options: ORS.SelectOptions<N, O>, callback: (current: O | null) => O | null) {
+    const current = select(options) as O | null;
+    const next = callback(current);
+    if (!next) return;
+    if (!current) return upsert({ ...next, __identify__: options.from });
+    upsert({ ...current, ...next, __identify__: options.from })
   }
 
   const select = memo(<
