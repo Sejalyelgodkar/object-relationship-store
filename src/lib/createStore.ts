@@ -252,7 +252,7 @@ export function createStore<
             }
 
             const index = state[refName][refPrimaryKey][refField].indexOf(itemPrimaryKey);
-            if (index !== - 1) {
+            if (index !== -1) {
               if (state[refName][refPrimaryKey][refField].length === 1) {
                 delete state[refName][refPrimaryKey][refField];
                 return;
@@ -456,7 +456,7 @@ export function createStore<
               const itemPrimaryKey = item[primaryKey];
               const items = state[name][itemPrimaryKey][field];
               const next = [];
-              for (let i = 0; i < items.length; i++) {
+              for (let i = 0; i < items?.length; i++) {
                 const pk = items[i];
                 if (!item[field].includes(pk)) {
                   references.remove({ name: relationName, primaryKey: pk, ref: `${name}.${itemPrimaryKey}.${field}` });
