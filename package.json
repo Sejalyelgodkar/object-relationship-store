@@ -1,6 +1,6 @@
 {
   "name": "@jjmyers/object-relationship-store",
-  "version": "2.0.22",
+  "version": "2.0.23",
   "description": "A javascript object relationship store.",
   "main": "build/index.js",
   "module": "build/index.esm.js",

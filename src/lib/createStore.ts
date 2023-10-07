@@ -374,57 +374,59 @@ export function createStore<
       if (!state[name][item[primaryKey]]) state[name][item[primaryKey]] = {};
 
 
-      // Do not update indexes if we are inside an object,
-      // If we receive posts[], update indexes, if post has a user, we traverse inside, do not update indexes for user or any children of post.
-      if (!parentName) {
+      // If this item is indexed, add it to the index. The index is a set.
+      if ("__indexes__" in item) {
+        const __indexes__ = typeof item.__indexes__ === "string" ? [item.__indexes__] : item.__indexes__;
+        __indexes__
+          ?.forEach((indexKey) => {
 
-        // If this item is indexed, add it to the index. The index is a set.
-        if ("__indexes__" in item) {
-          const __indexes__ = typeof item.__indexes__ === "string" ? [item.__indexes__] : item.__indexes__;
-          __indexes__
-            ?.forEach((indexKey) => {
+            const [indexName] = indexKey.split("-")
 
-              const [indexName] = indexKey.split("-")
+            // @ts-ignore
+            const indexModel = model[indexName] as ORS.RelationalObjectIndex<I, O>
 
-              // @ts-ignore
-              const indexModel = model[indexName] as ORS.RelationalObjectIndex<I, O>
+            // If this object does not have an index, skip it.
+            if (!indexModel?.__objects.includes(name as O)) return;
 
-              // If this object does not have an index, skip it.
-              if (!indexModel?.__objects.includes(name as O)) return;
+            // If the model's index does not include this, add it.
+            if (!relationalObject.__indexes.includes(indexKey)) relationalObject.__indexes.push(indexKey)
 
-              // If the model's index does not include this, add it.
-              if (!relationalObject.__indexes.includes(indexKey)) relationalObject.__indexes.push(indexKey)
+            // If it's not defined in state, initialize it.
+            if (!state[indexKey]) (state[indexKey] as ORS.Index) = [];
 
-              // If it's not defined in state, initialize it.
-              if (!state[indexKey]) (state[indexKey] as ORS.Index) = [];
+            // If the key already exists in the index, skip it.
+            const objKey: ORS.Index[number] = `${name}-${item[primaryKey]}`;
+            if (!!(state[indexKey] as ORS.Index).includes(objKey)) return;
 
-              // If the key already exists in the index, skip it.
-              const objKey: ORS.Index[number] = `${name}-${item[primaryKey]}`;
-              if (!!(state[indexKey] as ORS.Index).includes(objKey)) return;
+            (state[indexKey] as ORS.Index).push(objKey);
+          })
 
-              (state[indexKey] as ORS.Index).push(objKey);
-            })
-
-          delete item.__indexes__;
-        }
-
-        if ("__removeFromIndexes__" in item) {
-          const __removeFromIndexes__ = typeof item.__removeFromIndexes__ === "string" ? [item.__removeFromIndexes__] : item.__removeFromIndexes__;
-
-          __removeFromIndexes__
-            ?.forEach((indexKey) => {
-
-              if (!state[indexKey]) return;
-
-              const objKey: ORS.Index[number] = `${name}-${item[primaryKey]}`;
-              const currentIndex = state[indexKey] as ORS.Index;
-              const selectedIndex = currentIndex.indexOf(objKey);
-              if (selectedIndex > -1) state[indexKey].splice(selectedIndex, 1);
-            })
-
-          delete item.__removeFromIndexes__;
-        }
+        delete item.__indexes__;
       }
+
+      if ("__removeFromIndexes__" in item) {
+        const __removeFromIndexes__ = typeof item.__removeFromIndexes__ === "string" ? [item.__removeFromIndexes__] : item.__removeFromIndexes__;
+
+        __removeFromIndexes__
+          ?.forEach((indexKey) => {
+
+            if (!state[indexKey]) return;
+
+            const objKey: ORS.Index[number] = `${name}-${item[primaryKey]}`;
+            const currentIndex = state[indexKey] as ORS.Index;
+            const selectedIndex = currentIndex.indexOf(objKey);
+            if (selectedIndex > -1) state[indexKey].splice(selectedIndex, 1);
+          })
+
+        delete item.__removeFromIndexes__;
+      }
+
+      // OUTDATED
+      // // Do not update indexes if we are inside an object,
+      // // If we receive posts[], update indexes, if post has a user, we traverse inside, do not update indexes for user or any children of post.
+      // if (!parentName) {
+
+      // }
 
 
       /**
@@ -444,7 +446,7 @@ export function createStore<
             if (!hasMany) {
 
               // hasOne and the item is a foreign key
-              if(typeof item[field] !== "object") {
+              if (typeof item[field] !== "object") {
                 state[name][item[primaryKey]][field] = item[field];
                 return;
               }
