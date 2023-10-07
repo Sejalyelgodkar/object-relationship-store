@@ -108,3 +108,26 @@ test("upsertWhere", () => {
   expect(store1.getReferences().thumbnail[207].length).toBe(0)
   expect(store1.getState().image[54].thumbnails.length).toBe(1)
 })
+
+test("upsertByPk", () => {
+
+  const store1 = createStore({
+    relationalCreators: [user, post, image, thumbnail],
+    identifier: {
+      'user': o => !!o.username,
+      'image': o => !!o.aspectRatio,
+      'thumbnail': o => !!o.uri,
+      'post': o => !!o.caption,
+    }
+  });
+
+  store1.upsert(posts)
+
+  store1.upsert({
+    id: 10,
+    user: 1,
+    __identify__: "post",
+  })
+
+  expect(store1.getState().post[10].user).toBe(1)
+})

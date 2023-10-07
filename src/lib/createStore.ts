@@ -442,6 +442,13 @@ export function createStore<
             if (!item[field]) return;
 
             if (!hasMany) {
+
+              // hasOne and the item is a foreign key
+              if(typeof item[field] !== "object") {
+                state[name][item[primaryKey]][field] = item[field];
+                return;
+              }
+
               upsertOne({
                 item: item[field],
                 parentPrimaryKey: item[primaryKey],
@@ -451,6 +458,7 @@ export function createStore<
               return;
             }
 
+            // hasMany and all the items are foreignKeys
             if (item[field].every((i: any) => typeof i !== "object")) {
               const relationName = relationalObject.__relationship[field].__name;
               const itemPrimaryKey = item[primaryKey];
