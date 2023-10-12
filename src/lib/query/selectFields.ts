@@ -37,8 +37,10 @@ export default function selectFields<
    */
   if (fields === "*")
     mapOverFields(Object.keys(object))
-  else
+  else if (Array.isArray(fields))
     mapOverFields(fields as string[])
+  else
+    throw new Error("Fields expecetd to be an array or string or '*'")
 
   return result
 }
